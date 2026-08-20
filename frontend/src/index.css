@@ -1,0 +1,7 @@
+/* Estas tres líneas activan Tailwind CSS en el proyecto. */
+/* @tailwind base agrega los estilos base del navegador normalizados. */
+@tailwind base;
+/* @tailwind components agrega los componentes de Tailwind. */
+@tailwind components;
+/* @tailwind utilities agrega todas las clases utilitarias de Tailwind (como flex, p-4, text-lg, etc.). */
+@tailwind utilities;
