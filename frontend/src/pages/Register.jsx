@@ -1,46 +1,31 @@
-import React, { useState } from 'react'              // Importa React y useState para manejar el formulario.
-import { Link, useNavigate } from 'react-router-dom'  // Link y useNavigate para navegar entre páginas.
-import { registrarUsuario } from '../services/auth.js' // Importa la función de registro.
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { registrarUsuario } from '../services/auth.js'
 
 // ============================================================
-// PÁGINA: Register
-// ============================================================
-// Muestra el formulario de registro con campos para:
-// nombre, correo, contraseña y rol (profesor o estudiante).
+// PÁGINA: Register — Diseño moderno con panel lateral
 // ============================================================
 function Register() {
 
-  const navigate = useNavigate() // Hook para redirigir al usuario después del registro.
+  const navigate = useNavigate()
 
-  // Estado del formulario.
-  const [name, setName] = useState('')           // Nombre del usuario.
-  const [email, setEmail] = useState('')         // Correo electrónico.
-  const [password, setPassword] = useState('')   // Contraseña.
-  const [role, setRole] = useState('student')    // Rol: 'student' por defecto.
-  const [error, setError] = useState('')         // Mensaje de error.
-  const [cargando, setCargando] = useState(false) // Estado de carga.
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole] = useState('student')
+  const [error, setError] = useState('')
+  const [cargando, setCargando] = useState(false)
 
-  // ============================================================
-  // FUNCIÓN: handleSubmit
-  // Maneja el envío del formulario de registro.
-  // ============================================================
   async function handleSubmit(e) {
-    e.preventDefault() // Evita que el formulario recargue la página.
-
-    // Validación básica: la contraseña debe tener al menos 6 caracteres.
+    e.preventDefault()
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres.')
-      return // Detiene la función si la validación falla.
+      return
     }
-
     setError('')
     setCargando(true)
-
-    // Llama a la función de registro con todos los datos del formulario.
     const { error } = await registrarUsuario(email, password, name, role)
-
     if (error) {
-      // Muestra el mensaje de error en español.
       if (error.message.includes('already registered')) {
         setError('Este correo ya está registrado. Intenta iniciar sesión.')
       } else {
@@ -48,141 +33,179 @@ function Register() {
       }
       setCargando(false)
     } else {
-      // Registro exitoso. Redirige al dashboard.
       navigate('/dashboard')
     }
   }
 
   return (
-    // Contenedor principal centrado.
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex">
 
-      {/* Caja del formulario. */}
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
+      {/* ---- PANEL IZQUIERDO: Decorativo (oculto en móvil) ---- */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-blue-950 to-blue-900 flex-col items-center justify-center p-12 relative overflow-hidden">
 
-        {/* Encabezado. */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🎓</div>
-          <h1 className="text-2xl font-bold text-gray-800">Educa AI</h1>
-          <p className="text-gray-500 mt-1">Crea tu cuenta</p>
+        <div className="absolute top-0 left-0 w-72 h-72 bg-blue-700/20 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
+
+        <div className="relative z-10 text-center">
+          <div className="text-7xl mb-6">🎓</div>
+          <h1 className="text-4xl font-bold text-white mb-4">Únete a Educa AI</h1>
+          <p className="text-blue-200 text-lg max-w-xs leading-relaxed">
+            Crea tu cuenta en segundos y comienza a aprender o enseñar hoy mismo.
+          </p>
+
+          <div className="mt-10 space-y-4 text-left">
+            {[
+              { icon: '👨‍🏫', text: 'Profesores: crea grupos y gestiona clases' },
+              { icon: '📚', text: 'Estudiantes: únete con un código simple' },
+              { icon: '⚡', text: 'Comunicación instantánea y actividades' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-700/40 rounded-xl flex items-center justify-center text-lg flex-shrink-0">
+                  {item.icon}
+                </div>
+                <span className="text-blue-100 text-sm">{item.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
 
-        {/* Formulario de registro. */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+      {/* ---- PANEL DERECHO: Formulario ---- */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
+        <div className="w-full max-w-md">
 
-          {/* Campo de nombre. */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre completo
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Tu nombre"
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
+          {/* Logo móvil */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="text-5xl mb-2">🎓</div>
+            <h1 className="text-2xl font-bold text-slate-800">Educa AI</h1>
           </div>
 
-          {/* Campo de email. */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Correo electrónico
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@correo.com"
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+            <div className="mb-7">
+              <h2 className="text-2xl font-bold text-slate-900">Crear cuenta</h2>
+              <p className="text-slate-500 mt-1 text-sm">Es gratis y solo toma un minuto</p>
+            </div>
 
-          {/* Campo de contraseña. */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-          {/* Selector de rol: profesor o estudiante. */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Soy...
-            </label>
-            {/* Dos botones para elegir el rol, como un toggle visual. */}
-            <div className="grid grid-cols-2 gap-3">
+              {/* Campo: Nombre */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Nombre completo
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Tu nombre"
+                  required
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-colors text-sm"
+                />
+              </div>
 
-              {/* Botón de Estudiante. */}
+              {/* Campo: Email */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Correo electrónico
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@correo.com"
+                  required
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-colors text-sm"
+                />
+              </div>
+
+              {/* Campo: Contraseña */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-colors text-sm"
+                />
+              </div>
+
+              {/* Selector de rol */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Soy...
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+
+                  {/* Estudiante */}
+                  <button
+                    type="button"
+                    onClick={() => setRole('student')}
+                    className={`p-4 rounded-xl border-2 text-center transition-all ${
+                      role === 'student'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                        : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-slate-50'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">📚</div>
+                    <div className="text-sm font-semibold">Estudiante</div>
+                  </button>
+
+                  {/* Profesor */}
+                  <button
+                    type="button"
+                    onClick={() => setRole('teacher')}
+                    className={`p-4 rounded-xl border-2 text-center transition-all ${
+                      role === 'teacher'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                        : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-slate-50'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">👨‍🏫</div>
+                    <div className="text-sm font-semibold">Profesor</div>
+                  </button>
+
+                </div>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-start gap-2">
+                  <span className="text-red-500 text-sm mt-0.5">⚠️</span>
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Botón */}
               <button
-                type="button" // type="button" evita que este botón envíe el formulario.
-                onClick={() => setRole('student')} // Cambia el rol a 'student'.
-                className={`p-3 rounded-lg border-2 text-center transition-colors ${
-                  role === 'student'
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700' // Estilo activo.
-                    : 'border-gray-200 text-gray-500 hover:border-gray-300' // Estilo inactivo.
-                }`}
+                type="submit"
+                disabled={cargando}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-sm"
               >
-                <div className="text-2xl mb-1">📚</div>
-                <div className="text-sm font-medium">Estudiante</div>
+                {cargando ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Creando cuenta...
+                  </span>
+                ) : 'Crear cuenta'}
               </button>
 
-              {/* Botón de Profesor. */}
-              <button
-                type="button"
-                onClick={() => setRole('teacher')}
-                className={`p-3 rounded-lg border-2 text-center transition-colors ${
-                  role === 'teacher'
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                }`}
-              >
-                <div className="text-2xl mb-1">👨‍🏫</div>
-                <div className="text-sm font-medium">Profesor</div>
-              </button>
+            </form>
 
-            </div>
+            <p className="text-center text-slate-500 mt-6 text-sm">
+              ¿Ya tienes cuenta?{' '}
+              <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700">
+                Inicia sesión
+              </Link>
+            </p>
           </div>
-
-          {/* Mensaje de error. */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
-
-          {/* Botón de envío. */}
-          <button
-            type="submit"
-            disabled={cargando}
-            className="w-full bg-indigo-600 text-white rounded-lg py-2.5 font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {cargando ? 'Creando cuenta...' : 'Crear cuenta'}
-          </button>
-
-        </form>
-
-        {/* Enlace para ir al login. */}
-        <p className="text-center text-gray-500 mt-6 text-sm">
-          ¿Ya tienes cuenta?{' '}
-          <Link to="/login" className="text-indigo-600 font-medium hover:underline">
-            Inicia sesión
-          </Link>
-        </p>
-
+        </div>
       </div>
     </div>
   )
 }
 
-export default Register // Exporta el componente.
+export default Register

@@ -1,124 +1,154 @@
-import React, { useState } from 'react'           // Importa React y useState para manejar el estado del formulario.
-import { Link, useNavigate } from 'react-router-dom' // Link crea enlaces. useNavigate permite redirigir a otra página.
-import { iniciarSesion } from '../services/auth.js'  // Importa la función de inicio de sesión.
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { iniciarSesion } from '../services/auth.js'
 
 // ============================================================
-// PÁGINA: Login
-// ============================================================
-// Muestra el formulario de inicio de sesión.
-// Cuando el usuario envía el formulario, llama a iniciarSesion().
-// Si es exitoso, redirige al dashboard.
+// PÁGINA: Login — Diseño moderno con panel lateral decorativo
 // ============================================================
 function Login() {
 
-  const navigate = useNavigate() // Hook para redirigir al usuario después del login.
+  const navigate = useNavigate()
 
-  // Estado del formulario: guarda lo que el usuario escribe.
-  const [email, setEmail] = useState('')       // Almacena el email.
-  const [password, setPassword] = useState('') // Almacena la contraseña.
-  const [error, setError] = useState('')       // Almacena el mensaje de error si falla el login.
-  const [cargando, setCargando] = useState(false) // Indica si se está procesando el formulario.
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [cargando, setCargando] = useState(false)
 
-  // ============================================================
-  // FUNCIÓN: handleSubmit
-  // Maneja el envío del formulario de login.
-  // ============================================================
   async function handleSubmit(e) {
-    e.preventDefault() // Evita que el formulario recargue la página (comportamiento HTML por defecto).
-
-    setError('')        // Limpia cualquier error anterior.
-    setCargando(true)   // Activa el estado de carga para deshabilitar el botón.
-
-    // Llama a la función de inicio de sesión con los datos del formulario.
+    e.preventDefault()
+    setError('')
+    setCargando(true)
     const { error } = await iniciarSesion(email, password)
-
     if (error) {
-      // Si hay error, muestra el mensaje al usuario.
       setError('Correo o contraseña incorrectos. Intenta de nuevo.')
-      setCargando(false) // Desactiva el estado de carga.
+      setCargando(false)
     } else {
-      // Si el login fue exitoso, redirige al dashboard.
       navigate('/dashboard')
     }
   }
 
   return (
-    // Contenedor principal: fondo gris, centrado vertical y horizontalmente.
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    // Layout de dos paneles: panel decorativo azul a la izquierda, formulario a la derecha.
+    <div className="min-h-screen flex">
 
-      {/* Caja del formulario: fondo blanco, sombra, bordes redondeados. */}
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
+      {/* ---- PANEL IZQUIERDO: Decorativo (oculto en móvil) ---- */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-blue-950 to-blue-900 flex-col items-center justify-center p-12 relative overflow-hidden">
 
-        {/* Encabezado: ícono y título. */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🎓</div>
-          <h1 className="text-2xl font-bold text-gray-800">Educa AI</h1>
-          <p className="text-gray-500 mt-1">Inicia sesión en tu cuenta</p>
+        {/* Círculos decorativos de fondo */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-blue-700/20 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
+
+        {/* Contenido del panel */}
+        <div className="relative z-10 text-center">
+          <div className="text-7xl mb-6">🎓</div>
+          <h1 className="text-4xl font-bold text-white mb-4">Educa AI</h1>
+          <p className="text-blue-200 text-lg max-w-xs leading-relaxed">
+            La plataforma educativa que conecta profesores y estudiantes en tiempo real.
+          </p>
+
+          {/* Características destacadas */}
+          <div className="mt-10 space-y-4 text-left">
+            {[
+              { icon: '💬', text: 'Chat en tiempo real con tu clase' },
+              { icon: '📋', text: 'Gestión de actividades y entregas' },
+              { icon: '🔑', text: 'Acceso con código único por grupo' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-700/40 rounded-xl flex items-center justify-center text-lg flex-shrink-0">
+                  {item.icon}
+                </div>
+                <span className="text-blue-100 text-sm">{item.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
 
-        {/* Formulario de login. onSubmit llama a handleSubmit cuando se envía. */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+      {/* ---- PANEL DERECHO: Formulario ---- */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
+        <div className="w-full max-w-md">
 
-          {/* Campo de email. */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Correo electrónico
-            </label>
-            <input
-              type="email"                          // Valida que sea un formato de email.
-              value={email}                         // El valor viene del estado.
-              onChange={(e) => setEmail(e.target.value)} // Actualiza el estado cuando el usuario escribe.
-              placeholder="tu@correo.com"
-              required                              // Hace que el campo sea obligatorio.
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
+          {/* Logo en móvil (el panel izquierdo está oculto) */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="text-5xl mb-2">🎓</div>
+            <h1 className="text-2xl font-bold text-slate-800">Educa AI</h1>
           </div>
 
-          {/* Campo de contraseña. */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña
-            </label>
-            <input
-              type="password"                           // Oculta el texto mientras se escribe.
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Tu contraseña"
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Mensaje de error (solo se muestra si hay un error). */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-600 text-sm">{error}</p>
+          {/* Tarjeta del formulario */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+            <div className="mb-7">
+              <h2 className="text-2xl font-bold text-slate-900">Bienvenido de vuelta</h2>
+              <p className="text-slate-500 mt-1 text-sm">Inicia sesión en tu cuenta</p>
             </div>
-          )}
 
-          {/* Botón de envío. Se deshabilita mientras se procesa el formulario. */}
-          <button
-            type="submit"
-            disabled={cargando} // Deshabilita el botón mientras carga.
-            className="w-full bg-indigo-600 text-white rounded-lg py-2.5 font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {/* Muestra "Iniciando sesión..." mientras carga, o "Iniciar sesión" normalmente. */}
-            {cargando ? 'Iniciando sesión...' : 'Iniciar sesión'}
-          </button>
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-        </form>
+              {/* Campo: Email */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Correo electrónico
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@correo.com"
+                  required
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-colors text-sm"
+                />
+              </div>
 
-        {/* Enlace para ir a la página de registro. */}
-        <p className="text-center text-gray-500 mt-6 text-sm">
-          ¿No tienes cuenta?{' '}
-          <Link to="/register" className="text-indigo-600 font-medium hover:underline">
-            Regístrate aquí
-          </Link>
-        </p>
+              {/* Campo: Contraseña */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Tu contraseña"
+                  required
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-colors text-sm"
+                />
+              </div>
 
+              {/* Error */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-start gap-2">
+                  <span className="text-red-500 text-sm mt-0.5">⚠️</span>
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Botón principal */}
+              <button
+                type="submit"
+                disabled={cargando}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-sm"
+              >
+                {cargando ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Iniciando sesión...
+                  </span>
+                ) : 'Iniciar sesión'}
+              </button>
+
+            </form>
+
+            {/* Enlace al registro */}
+            <p className="text-center text-slate-500 mt-6 text-sm">
+              ¿No tienes cuenta?{' '}
+              <Link to="/register" className="text-blue-600 font-semibold hover:text-blue-700">
+                Regístrate gratis
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-export default Login // Exporta el componente para usarlo en las rutas de App.jsx.
+export default Login

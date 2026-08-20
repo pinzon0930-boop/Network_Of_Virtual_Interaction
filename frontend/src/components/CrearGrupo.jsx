@@ -1,150 +1,108 @@
-import { useState } from 'react'               // useState para manejar el formulario.
-import { crearGrupo } from '../services/grupos.js' // Función para crear el grupo en Supabase.
-import { useAuth } from '../context/AuthContext.jsx' // Para obtener el ID del profesor.
+import { useState } from 'react'
+import { crearGrupo } from '../services/grupos.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 // ============================================================
-// COMPONENTE: CrearGrupo
-// ============================================================
-// Muestra un formulario para que el profesor cree un nuevo grupo.
-// Cuando el grupo se crea, llama a onGrupoCreado para que la página
-// padre actualice la lista de grupos.
-// Props:
-//   - onGrupoCreado: función que se llama cuando el grupo fue creado.
-//   - onCancelar: función que se llama cuando el usuario cancela.
+// COMPONENTE: CrearGrupo — Modal para crear un nuevo grupo
 // ============================================================
 export default function CrearGrupo({ onGrupoCreado, onCancelar }) {
 
-  // Estado para el nombre del grupo (campo obligatorio).
   const [nombre, setNombre] = useState('')
-
-  // Estado para la descripción del grupo (campo opcional).
   const [descripcion, setDescripcion] = useState('')
-
-  // Estado para mostrar errores en el formulario.
   const [error, setError] = useState('')
-
-  // Estado para mostrar el spinner mientras se guarda.
   const [cargando, setCargando] = useState(false)
-
-  // Obtenemos el perfil del profesor (necesitamos su ID).
   const { perfil } = useAuth()
 
-  // ============================================================
-  // FUNCIÓN: handleSubmit
-  // ============================================================
-  // Se ejecuta cuando el profesor hace clic en "Crear grupo".
-  // Valida los campos y llama a crearGrupo().
-  // ============================================================
   async function handleSubmit(e) {
-    e.preventDefault() // Evita que la página se recargue al enviar el formulario.
-
-    // Validación: el nombre es obligatorio.
-    if (!nombre.trim()) {
-      setError('El nombre del grupo es obligatorio.')
-      return // Sale de la función sin continuar.
-    }
-
-    setCargando(true) // Muestra el spinner.
-    setError('')      // Limpia errores anteriores.
-
-    // Llama a la función para crear el grupo en Supabase.
-    const { data, error: errorCrear } = await crearGrupo(
-      nombre.trim(),       // Nombre del grupo (sin espacios extra).
-      descripcion.trim(),  // Descripción (puede estar vacía).
-      perfil.id            // ID del profesor actual.
-    )
-
-    setCargando(false) // Oculta el spinner.
-
-    // Si hubo error, lo mostramos.
-    if (errorCrear) {
-      setError('Error al crear el grupo. Intenta de nuevo.')
-      return
-    }
-
-    // Si se creó correctamente, avisamos a la página padre.
+    e.preventDefault()
+    if (!nombre.trim()) { setError('El nombre del grupo es obligatorio.'); return }
+    setCargando(true)
+    setError('')
+    const { data, error: errorCrear } = await crearGrupo(nombre.trim(), descripcion.trim(), perfil.id)
+    setCargando(false)
+    if (errorCrear) { setError('Error al crear el grupo. Intenta de nuevo.'); return }
     onGrupoCreado(data)
   }
 
-  // ============================================================
-  // RENDER: Formulario de creación de grupo
-  // ============================================================
   return (
-    // Overlay oscuro de fondo (modal).
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    // Overlay con blur sutil
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
 
-      {/* Caja del modal */}
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-xl">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 overflow-hidden">
 
-        {/* Título del modal */}
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          Crear nuevo grupo
-        </h2>
+        {/* Cabecera del modal */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5">
+          <h2 className="text-xl font-bold text-white">Crear nuevo grupo</h2>
+          <p className="text-blue-100 text-sm mt-0.5">El código de acceso se generará automáticamente</p>
+        </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-6">
 
-          {/* Campo: Nombre del grupo */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre del grupo *
-            </label>
-            <input
-              type="text"
-              value={nombre}
-              onChange={e => setNombre(e.target.value)} // Actualiza el estado al escribir.
-              placeholder="Ej: Matemáticas 10°, Física General..."
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              maxLength={100} // Máximo 100 caracteres.
-            />
-          </div>
-
-          {/* Campo: Descripción (opcional) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descripción (opcional)
-            </label>
-            <textarea
-              value={descripcion}
-              onChange={e => setDescripcion(e.target.value)} // Actualiza el estado al escribir.
-              placeholder="Describe brevemente el grupo..."
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              rows={3}        // Altura de 3 líneas.
-              maxLength={500} // Máximo 500 caracteres.
-            />
-          </div>
-
-          {/* Mensaje de error si algo falló */}
+          {/* Error */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-5 text-sm flex items-center gap-2">
+              <span>⚠️</span> {error}
             </div>
           )}
 
-          {/* Botones de acción */}
-          <div className="flex gap-3 pt-2">
+          <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Botón cancelar */}
-            <button
-              type="button"
-              onClick={onCancelar} // Llama a la función de cancelar del padre.
-              className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition font-medium"
-            >
-              Cancelar
-            </button>
+            {/* Nombre */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                Nombre del grupo <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
+                placeholder="Ej: Matemáticas 10°, Física General..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                maxLength={100}
+                autoFocus
+              />
+            </div>
 
-            {/* Botón crear */}
-            <button
-              type="submit"
-              disabled={cargando} // Desactiva el botón mientras carga.
-              className="flex-1 bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition font-medium disabled:opacity-50"
-            >
-              {/* Muestra "Creando..." mientras carga, o "Crear grupo" si no */}
-              {cargando ? 'Creando...' : 'Crear grupo'}
-            </button>
+            {/* Descripción */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                Descripción <span className="text-slate-400 font-normal text-xs">(opcional)</span>
+              </label>
+              <textarea
+                value={descripcion}
+                onChange={e => setDescripcion(e.target.value)}
+                placeholder="Describe brevemente el grupo..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                rows={3}
+                maxLength={500}
+              />
+            </div>
 
-          </div>
-        </form>
+            {/* Botones */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onCancelar}
+                className="flex-1 border-2 border-slate-200 text-slate-700 py-2.5 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition font-semibold text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={cargando}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl transition font-semibold disabled:opacity-50 text-sm shadow-sm"
+              >
+                {cargando ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Creando...
+                  </span>
+                ) : 'Crear grupo'}
+              </button>
+            </div>
+
+          </form>
+        </div>
       </div>
     </div>
   )

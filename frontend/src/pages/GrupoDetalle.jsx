@@ -1,431 +1,352 @@
-import { useState, useEffect, useRef } from 'react'          // useState: estado local. useEffect: efectos secundarios. useRef: referencia al DOM.
-import { useParams, useNavigate } from 'react-router-dom'    // useParams: lee el :id de la URL. useNavigate: redirige a otras páginas.
-import { useAuth } from '../context/AuthContext.jsx'          // Para obtener el perfil del usuario autenticado.
-import { cerrarSesion } from '../services/auth.js'            // Para cerrar la sesión del usuario.
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
+import { cerrarSesion } from '../services/auth.js'
 import {
-  obtenerMensajes,        // Carga los mensajes históricos del chat.
-  enviarMensaje,          // Envía un nuevo mensaje al grupo.
-  suscribirseAMensajes,   // Escucha mensajes nuevos en tiempo real.
-  desuscribirse           // Cancela la escucha en tiempo real al salir.
+  obtenerMensajes,
+  enviarMensaje,
+  suscribirseAMensajes,
+  desuscribirse
 } from '../services/mensajes.js'
 import {
-  obtenerActividades,     // Carga la lista de actividades del grupo.
-  entregarActividad,      // Registra que el estudiante entregó una actividad.
-  obtenerMisEntregas      // Obtiene los IDs de actividades que el estudiante ya entregó.
+  obtenerActividades,
+  entregarActividad,
+  obtenerMisEntregas
 } from '../services/actividades.js'
-import CrearActividad from '../components/CrearActividad.jsx' // Modal para que el profesor cree actividades.
+import CrearActividad from '../components/CrearActividad.jsx'
 
 // ============================================================
-// PÁGINA: GrupoDetalle
-// ============================================================
-// Muestra el interior de un grupo con dos pestañas:
-//   - Chat: mensajes en tiempo real entre los miembros.
-//   - Actividades: tareas que el profesor publica y los estudiantes entregan.
-// El diseño es responsive: funciona en móvil y escritorio.
+// PÁGINA: GrupoDetalle — Chat y Actividades del grupo
 // ============================================================
 export default function GrupoDetalle() {
 
-  // Lee el parámetro :id de la URL. Ejemplo: /grupos/abc123 → grupoId = "abc123"
   const { id: grupoId } = useParams()
-
-  // Controla cuál pestaña está activa: 'chat' o 'actividades'.
   const [pestañaActiva, setPestañaActiva] = useState('chat')
-
-  // Perfil del usuario actual (id, name, role).
   const { perfil } = useAuth()
-
-  // Para redirigir a otras páginas.
   const navigate = useNavigate()
 
-  // ---- Estado: Chat ----
-  const [mensajes,      setMensajes]      = useState([])    // Lista de mensajes del chat.
-  const [nuevoMensaje,  setNuevoMensaje]  = useState('')    // Texto que el usuario está escribiendo.
-  const [enviando,      setEnviando]      = useState(false) // true mientras se envía un mensaje.
-  const [cargandoChat,  setCargandoChat]  = useState(true)  // true mientras se cargan los mensajes iniciales.
-  const [errorChat,     setErrorChat]     = useState('')    // Mensaje de error si algo falla en el chat.
-  const finalMensajesRef = useRef(null)                     // Referencia al div al final del chat (para el scroll automático).
+  // Estado: Chat
+  const [mensajes,      setMensajes]      = useState([])
+  const [nuevoMensaje,  setNuevoMensaje]  = useState('')
+  const [enviando,      setEnviando]      = useState(false)
+  const [cargandoChat,  setCargandoChat]  = useState(true)
+  const [errorChat,     setErrorChat]     = useState('')
+  const finalMensajesRef = useRef(null)
 
-  // ---- Estado: Actividades ----
-  const [actividades,            setActividades]            = useState([])   // Lista de actividades del grupo.
-  const [cargandoActividades,    setCargandoActividades]    = useState(false) // true mientras se cargan actividades.
-  const [misEntregas,            setMisEntregas]            = useState([])   // IDs de actividades que ya entregué.
-  const [mostrarCrearActividad,  setMostrarCrearActividad]  = useState(false) // true para mostrar el modal de nueva actividad.
-  const [entregando,             setEntregando]             = useState(null)  // ID de la actividad que se está entregando.
-  const [errorActividades,       setErrorActividades]       = useState('')    // Mensaje de error en la pestaña de actividades.
-  const [exitoActividades,       setExitoActividades]       = useState('')    // Mensaje de éxito al crear/entregar actividad.
+  // Estado: Actividades
+  const [actividades,            setActividades]            = useState([])
+  const [cargandoActividades,    setCargandoActividades]    = useState(false)
+  const [misEntregas,            setMisEntregas]            = useState([])
+  const [mostrarCrearActividad,  setMostrarCrearActividad]  = useState(false)
+  const [entregando,             setEntregando]             = useState(null)
+  const [errorActividades,       setErrorActividades]       = useState('')
+  const [exitoActividades,       setExitoActividades]       = useState('')
 
   // ============================================================
-  // EFECTO 1: Cargar chat y suscribirse a mensajes en tiempo real
-  // ============================================================
-  // Se ejecuta cuando el componente se monta o cuando cambia grupoId/perfil.
+  // EFECTOS
   // ============================================================
   useEffect(() => {
-    if (!grupoId || !perfil) return // Esperar a tener grupo y perfil.
-
-    cargarMensajes() // Carga los mensajes históricos.
-
-    // Suscribirse a nuevos mensajes en tiempo real.
+    if (!grupoId || !perfil) return
+    cargarMensajes()
     const canal = suscribirseAMensajes(grupoId, (mensajeNuevo) => {
       setMensajes(prev => {
-        // Evita duplicar mensajes (pueden llegar por el realtime y por la carga inicial).
         const yaExiste = prev.some(m => m.id === mensajeNuevo.id)
-        if (yaExiste) return prev           // Si ya existe, no lo agrega.
-        return [...prev, mensajeNuevo]      // Si es nuevo, lo agrega al final.
+        if (yaExiste) return prev
+        return [...prev, mensajeNuevo]
       })
     })
-
-    // Cleanup: cancelar la suscripción cuando el usuario sale del grupo.
     return () => { desuscribirse(canal) }
-  }, [grupoId, perfil]) // Se re-ejecuta si cambia el grupo o el perfil.
+  }, [grupoId, perfil])
 
-  // ============================================================
-  // EFECTO 2: Scroll automático al último mensaje
-  // ============================================================
-  // Cada vez que la lista de mensajes cambia, baja automáticamente al fondo.
-  // ============================================================
   useEffect(() => {
-    finalMensajesRef.current?.scrollIntoView({ behavior: 'smooth' }) // Scroll suave al div final.
-  }, [mensajes]) // Se ejecuta cuando llega un nuevo mensaje.
+    finalMensajesRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [mensajes])
 
-  // ============================================================
-  // EFECTO 3: Cargar actividades al cambiar a esa pestaña
-  // ============================================================
-  // Solo carga las actividades cuando el usuario hace clic en "Actividades".
-  // ============================================================
   useEffect(() => {
-    if (!grupoId || !perfil || pestañaActiva !== 'actividades') return // Solo si está en la pestaña correcta.
-    cargarActividades() // Carga las actividades del grupo.
-  }, [grupoId, perfil, pestañaActiva]) // Se ejecuta cuando cambia la pestaña activa.
+    if (!grupoId || !perfil || pestañaActiva !== 'actividades') return
+    cargarActividades()
+  }, [grupoId, perfil, pestañaActiva])
 
   // ============================================================
-  // FUNCIÓN: cargarMensajes
-  // ============================================================
-  // Obtiene los 50 mensajes más recientes del grupo desde Supabase.
+  // FUNCIONES
   // ============================================================
   async function cargarMensajes() {
-    setCargandoChat(true)                                        // Muestra el spinner de carga.
-    const { data, error } = await obtenerMensajes(grupoId)      // Consulta a Supabase.
-    setCargandoChat(false)                                       // Oculta el spinner.
-    if (error) { setErrorChat('Error al cargar el chat.'); return } // Si hay error, lo muestra.
-    setMensajes(data || [])                                      // Guarda los mensajes en el estado.
+    setCargandoChat(true)
+    const { data, error } = await obtenerMensajes(grupoId)
+    setCargandoChat(false)
+    if (error) { setErrorChat('Error al cargar el chat.'); return }
+    setMensajes(data || [])
   }
 
-  // ============================================================
-  // FUNCIÓN: handleEnviar
-  // ============================================================
-  // Se ejecuta cuando el usuario envía un mensaje (submit del formulario).
-  // ============================================================
   async function handleEnviar(e) {
-    e.preventDefault()                                           // Evita que el formulario recargue la página.
-    if (!nuevoMensaje.trim() || enviando) return                 // Valida que el mensaje no esté vacío y no esté ya enviando.
-
-    setEnviando(true)                                            // Deshabilita el botón de envío.
-    const textoAEnviar = nuevoMensaje.trim()                     // Guarda el texto antes de limpiar el campo.
-    setNuevoMensaje('')                                          // Limpia el campo de texto inmediatamente.
-
-    const { error } = await enviarMensaje(grupoId, perfil.id, textoAEnviar) // Envía a Supabase.
-
-    setEnviando(false)                                           // Reactiva el botón.
-    if (error) {
-      setNuevoMensaje(textoAEnviar)                              // Si falló, restaura el texto en el campo.
-      setErrorChat('Error al enviar el mensaje.')                 // Muestra el error.
-    }
-    // Nota: el mensaje aparecerá automáticamente por la suscripción en tiempo real.
+    e.preventDefault()
+    if (!nuevoMensaje.trim() || enviando) return
+    setEnviando(true)
+    const textoAEnviar = nuevoMensaje.trim()
+    setNuevoMensaje('')
+    const { error } = await enviarMensaje(grupoId, perfil.id, textoAEnviar)
+    setEnviando(false)
+    if (error) { setNuevoMensaje(textoAEnviar); setErrorChat('Error al enviar el mensaje.') }
   }
 
-  // ============================================================
-  // FUNCIÓN: cargarActividades
-  // ============================================================
-  // Obtiene las actividades del grupo y, si el usuario es estudiante,
-  // también carga cuáles ya entregó.
-  // ============================================================
   async function cargarActividades() {
-    setCargandoActividades(true)                                  // Muestra el spinner.
-    setErrorActividades('')                                        // Limpia errores anteriores.
-
-    const { data, error } = await obtenerActividades(grupoId)    // Obtiene las actividades de Supabase.
-
-    if (error) {
-      setErrorActividades('Error al cargar las actividades.')     // Muestra el error.
-      setCargandoActividades(false)
-      return
-    }
-
-    setActividades(data || [])                                    // Guarda las actividades.
-
-    // Si el usuario es estudiante, también carga sus entregas para saber cuáles ya hizo.
+    setCargandoActividades(true)
+    setErrorActividades('')
+    const { data, error } = await obtenerActividades(grupoId)
+    if (error) { setErrorActividades('Error al cargar las actividades.'); setCargandoActividades(false); return }
+    setActividades(data || [])
     if (perfil.role === 'student') {
-      const { data: entregas } = await obtenerMisEntregas(perfil.id) // Consulta las entregas del estudiante.
-      setMisEntregas((entregas || []).map(e => e.activity_id))    // Guarda solo los IDs de las actividades entregadas.
+      const { data: entregas } = await obtenerMisEntregas(perfil.id)
+      setMisEntregas((entregas || []).map(e => e.activity_id))
     }
-
-    setCargandoActividades(false)                                 // Oculta el spinner.
+    setCargandoActividades(false)
   }
 
-  // ============================================================
-  // FUNCIÓN: handleEntregar
-  // ============================================================
-  // Registra que el estudiante entregó una actividad.
-  // Parámetros:
-  //   - actividadId: ID de la actividad a entregar.
-  // ============================================================
   async function handleEntregar(actividadId) {
-    setEntregando(actividadId)                                    // Muestra "..." en el botón de esa actividad.
-
-    const { error } = await entregarActividad(actividadId, perfil.id) // Registra la entrega en Supabase.
-
-    setEntregando(null)                                           // Oculta el spinner del botón.
-
-    if (error) { setErrorActividades('Error al entregar la actividad.'); return } // Muestra error si falló.
-
-    setMisEntregas(prev => [...prev, actividadId])                // Agrega el ID a la lista local de entregas.
-    setExitoActividades('¡Actividad marcada como entregada!')     // Muestra mensaje de éxito.
-    setTimeout(() => setExitoActividades(''), 3000)              // Oculta el mensaje después de 3 segundos.
+    setEntregando(actividadId)
+    const { error } = await entregarActividad(actividadId, perfil.id)
+    setEntregando(null)
+    if (error) { setErrorActividades('Error al entregar la actividad.'); return }
+    setMisEntregas(prev => [...prev, actividadId])
+    setExitoActividades('¡Actividad marcada como entregada!')
+    setTimeout(() => setExitoActividades(''), 3000)
   }
 
-  // ============================================================
-  // FUNCIÓN: handleActividadCreada
-  // ============================================================
-  // Se llama cuando el profesor crea una nueva actividad en el modal.
-  // Actualiza la lista local sin recargar desde Supabase.
-  // ============================================================
   function handleActividadCreada(nuevaActividad) {
-    setMostrarCrearActividad(false)                               // Cierra el modal.
-    setActividades(prev => [nuevaActividad, ...prev])             // Agrega la nueva actividad al inicio de la lista.
-    setExitoActividades('¡Actividad creada exitosamente!')        // Muestra mensaje de éxito.
-    setTimeout(() => setExitoActividades(''), 3000)              // Oculta el mensaje después de 3 segundos.
+    setMostrarCrearActividad(false)
+    setActividades(prev => [nuevaActividad, ...prev])
+    setExitoActividades('¡Actividad creada exitosamente!')
+    setTimeout(() => setExitoActividades(''), 3000)
   }
 
-  // ============================================================
-  // FUNCIÓN: handleLogout
-  // ============================================================
-  // Cierra la sesión y redirige al login.
-  // ============================================================
   async function handleLogout() {
-    await cerrarSesion() // Cierra la sesión en Supabase.
-    navigate('/login')   // Redirige a la página de login.
+    await cerrarSesion()
+    navigate('/login')
   }
 
-  // ============================================================
-  // FUNCIÓN: formatearHora
-  // ============================================================
-  // Convierte una fecha ISO 8601 a formato de hora local.
-  // Ejemplo: "2024-01-15T14:30:00Z" → "9:30 AM"
-  // ============================================================
   function formatearHora(fechaISO) {
-    return new Date(fechaISO).toLocaleTimeString('es-CO', {
-      hour: '2-digit',   // Muestra la hora con 2 dígitos.
-      minute: '2-digit', // Muestra los minutos con 2 dígitos.
+    return new Date(fechaISO).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  function formatearFecha(fechaISO) {
+    if (!fechaISO) return null
+    return new Date(fechaISO).toLocaleDateString('es-CO', {
+      day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
     })
   }
 
-  // ============================================================
-  // FUNCIÓN: formatearFecha
-  // ============================================================
-  // Convierte una fecha ISO 8601 a formato legible completo.
-  // Ejemplo: "2024-01-15T14:30:00Z" → "15 de enero de 2024, 9:30 AM"
-  // ============================================================
-  function formatearFecha(fechaISO) {
-    if (!fechaISO) return null // Si no hay fecha, no muestra nada.
-    return new Date(fechaISO).toLocaleDateString('es-CO', {
-      day:    'numeric', // Día del mes.
-      month:  'long',    // Nombre completo del mes.
-      year:   'numeric', // Año con 4 dígitos.
-      hour:   '2-digit', // Hora.
-      minute: '2-digit', // Minutos.
-    })
+  // Genera un color de avatar consistente según el nombre
+  function colorAvatar(nombre) {
+    const colores = [
+      'bg-blue-500', 'bg-indigo-500', 'bg-violet-500',
+      'bg-sky-500', 'bg-teal-500', 'bg-emerald-500',
+      'bg-rose-500', 'bg-orange-500',
+    ]
+    const idx = (nombre?.charCodeAt(0) || 0) % colores.length
+    return colores[idx]
   }
+
+  const esProfesor = perfil?.role === 'teacher'
 
   // ============================================================
   // RENDER
   // ============================================================
   return (
-    // h-screen: ocupa exactamente la altura de la pantalla.
-    // flex flex-col: organiza los hijos en columna (navbar arriba, contenido abajo).
-    // overflow-hidden: evita scroll en el contenedor principal (el scroll está dentro del chat).
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
 
       {/* ---- NAVBAR ---- */}
-      {/* flex-shrink-0: el navbar no se encoge aunque el contenido sea grande. */}
-      <nav className="bg-white shadow-sm flex-shrink-0">
-        <div className="max-w-6xl mx-auto px-3 py-3 flex items-center justify-between">
+      <nav className="bg-slate-900 border-b border-slate-700/60 flex-shrink-0">
+        <div className="max-w-5xl mx-auto px-3 py-3 flex items-center justify-between">
 
-          {/* Izquierda: botón volver + logo */}
-          <div className="flex items-center gap-2">
-            {/* Botón para volver a la lista de grupos. */}
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => navigate('/grupos')}
-              className="text-gray-400 hover:text-gray-600 transition text-xl p-1"
+              className="text-slate-400 hover:text-white transition-colors p-1"
+              title="Volver a grupos"
             >
               ←
             </button>
-            {/* Logo que lleva al dashboard. hidden sm:inline oculta el texto "Educa AI" en móvil. */}
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-1.5 text-primary font-bold text-base sm:text-xl"
+              className="flex items-center gap-2 text-white font-bold"
             >
-              🎓 <span className="hidden sm:inline">Educa AI</span>
+              <span className="text-xl">🎓</span>
+              <span className="hidden sm:inline text-base">Educa AI</span>
             </button>
           </div>
 
-          {/* Derecha: nombre (oculto en móvil) + badge de rol + botón de logout */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* hidden sm:block: el nombre solo aparece en pantallas medianas o grandes. */}
-            <span className="hidden sm:block text-gray-700 font-medium text-sm">
-              {perfil?.name}
-            </span>
-            {/* Badge de color según el rol: morado para profesor, azul para estudiante. */}
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              perfil?.role === 'teacher'
-                ? 'bg-purple-100 text-purple-700' // Estilo para profesor.
-                : 'bg-blue-100 text-blue-700'     // Estilo para estudiante.
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden sm:block text-slate-300 text-sm">{perfil?.name}</span>
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+              esProfesor
+                ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
             }`}>
-              {perfil?.role === 'teacher' ? 'Profesor' : 'Estudiante'}
+              {esProfesor ? 'Profesor' : 'Estudiante'}
             </span>
-            {/* En desktop muestra "Cerrar sesión", en móvil muestra "✕". */}
-            <button
-              onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 transition text-sm"
-              title="Cerrar sesión"
-            >
-              <span className="hidden sm:inline">Cerrar sesión</span> {/* Solo en desktop. */}
-              <span className="sm:hidden text-base">✕</span>          {/* Solo en móvil. */}
+            <button onClick={handleLogout} className="text-slate-400 hover:text-white transition-colors text-sm">
+              <span className="hidden sm:inline">Salir</span>
+              <span className="sm:hidden">✕</span>
             </button>
           </div>
         </div>
       </nav>
 
       {/* ---- ÁREA PRINCIPAL ---- */}
-      {/* flex-1: ocupa todo el espacio restante debajo del navbar. */}
-      {/* min-h-0: permite que flex-1 funcione correctamente con overflow. */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-2 sm:px-4 py-3 sm:py-6 flex flex-col min-h-0">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-2 sm:px-4 py-3 flex flex-col min-h-0">
 
-        {/* ---- CABECERA CON PESTAÑAS ---- */}
-        {/* flex-shrink-0: la cabecera no se encoge. */}
-        <div className="bg-white rounded-t-xl px-4 pt-3 pb-0 shadow-sm flex-shrink-0">
-          {/* Título: diferente para profesor y estudiante. */}
-          <h1 className="font-bold text-gray-800 text-sm sm:text-lg mb-2 sm:mb-3">
-            {perfil?.role === 'teacher' ? '👨‍🏫 Mi grupo' : '📚 Mi clase'}
-          </h1>
-          {/* Pestañas de navegación. */}
-          <div className="flex gap-1 border-b border-gray-100">
-            {/* Pestaña Chat. */}
-            <button
-              onClick={() => setPestañaActiva('chat')}
-              className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium transition border-b-2 -mb-px ${
-                pestañaActiva === 'chat'
-                  ? 'border-primary text-primary'              // Estilo activo: borde e texto en color primario.
-                  : 'border-transparent text-gray-500 hover:text-gray-700' // Estilo inactivo.
-              }`}
-            >
-              💬 Chat
-            </button>
-            {/* Pestaña Actividades. */}
-            <button
-              onClick={() => setPestañaActiva('actividades')}
-              className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium transition border-b-2 -mb-px ${
-                pestañaActiva === 'actividades'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              📋 Actividades
-            </button>
+        {/* ---- TABS HEADER ---- */}
+        <div className="bg-slate-800 rounded-t-2xl border border-slate-700 border-b-0 px-4 pt-4 pb-0 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${pestañaActiva === 'chat' ? 'bg-green-400' : 'bg-blue-400'}`} />
+              <h1 className="font-bold text-white text-sm sm:text-base">
+                {esProfesor ? '👨‍🏫 Mi grupo' : '📚 Mi clase'}
+              </h1>
+            </div>
+            <span className="text-slate-500 text-xs">
+              {pestañaActiva === 'chat' ? `${mensajes.length} mensajes` : `${actividades.length} actividades`}
+            </span>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1">
+            {[
+              { id: 'chat', label: 'Chat', icon: '💬' },
+              { id: 'actividades', label: 'Actividades', icon: '📋' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setPestañaActiva(tab.id)}
+                className={`px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-semibold rounded-t-lg transition-all border-b-2 -mb-px ${
+                  pestañaActiva === tab.id
+                    ? 'border-blue-400 text-blue-300 bg-slate-700/50'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-700/30'
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* ============================================================ */}
         {/* PESTAÑA: CHAT                                                 */}
-        {/* Solo se renderiza cuando pestañaActiva === 'chat'.           */}
         {/* ============================================================ */}
         {pestañaActiva === 'chat' && (
-          // flex-col + flex-1 + min-h-0: patrón para que el chat ocupe el espacio restante
-          // y el scroll funcione correctamente en móvil.
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 border border-slate-700 border-t-0 rounded-b-2xl overflow-hidden">
 
-            {/* Mensaje de error del chat (si hay). */}
             {errorChat && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 text-xs">
-                {errorChat}
+              <div className="bg-red-900/40 border-b border-red-700 text-red-300 px-4 py-2 text-xs flex items-center gap-2 flex-shrink-0">
+                ⚠️ {errorChat}
               </div>
             )}
 
-            {/* Área de mensajes: overflow-y-auto activa el scroll vertical cuando hay muchos mensajes. */}
-            <div className="flex-1 bg-white px-3 sm:px-6 py-4 overflow-y-auto shadow-sm min-h-0">
+            {/* Lista de mensajes — fondo oscuro con patrón sutil */}
+            <div
+              className="flex-1 overflow-y-auto min-h-0 px-4 py-5"
+              style={{
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+                backgroundSize: '400% 400%',
+              }}
+            >
               {cargandoChat ? (
-                // Spinner mientras se cargan los mensajes.
-                <div className="text-center text-gray-400 py-8 text-sm">
-                  Cargando mensajes...
+                <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                  <div className="w-8 h-8 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin mb-3" />
+                  <p className="text-sm">Cargando mensajes...</p>
                 </div>
               ) : mensajes.length === 0 ? (
-                // Estado vacío: no hay mensajes aún.
-                <div className="text-center text-gray-400 py-12">
-                  <div className="text-4xl mb-2">💬</div>
-                  <p className="text-sm">Sé el primero en escribir algo</p>
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center text-3xl mb-4 border border-slate-700">
+                    💬
+                  </div>
+                  <p className="text-slate-300 font-semibold text-base">¡Empieza la conversación!</p>
+                  <p className="text-slate-500 text-sm mt-1">Sé el primero en escribir algo</p>
                 </div>
               ) : (
-                // Lista de mensajes.
-                <div className="space-y-3 sm:space-y-4">
-                  {mensajes.map(mensaje => {
-                    const esMio = mensaje.user_id === perfil?.id // true si este mensaje es del usuario actual.
+                <div className="space-y-4">
+                  {mensajes.map((mensaje, index) => {
+                    const esMio = mensaje.user_id === perfil?.id
+                    const nombreUsuario = esMio ? perfil?.name : mensaje.users?.name
+                    const inicial = nombreUsuario?.charAt(0)?.toUpperCase() || '?'
+                    const esProfesorMensaje = mensaje.users?.role === 'teacher'
+
+                    // Agrupar mensajes consecutivos del mismo usuario
+                    const mensajeAnterior = mensajes[index - 1]
+                    const mismoDueno = mensajeAnterior?.user_id === mensaje.user_id
+                    const mostrarAvatar = !esMio && !mismoDueno
+
                     return (
-                      // Alinea el mensaje a la derecha si es mío, a la izquierda si es de otro.
-                      <div key={mensaje.id} className={`flex ${esMio ? 'justify-end' : 'justify-start'}`}>
-                        {/* Burbuja de mensaje. max-w-[80%] en móvil, max-w-md en desktop. */}
-                        <div className={`max-w-[80%] sm:max-w-md ${esMio ? 'items-end' : 'items-start'} flex flex-col`}>
-                          {/* Nombre del remitente (solo para mensajes de otros). */}
-                          {!esMio && (
-                            <span className="text-xs text-gray-500 mb-1 ml-1">
-                              {mensaje.users?.name}
-                              {/* Si el remitente es el profesor, muestra "· Profesor". */}
-                              {mensaje.users?.role === 'teacher' && (
-                                <span className="ml-1 text-purple-500">· Profesor</span>
+                      <div key={mensaje.id} className={`flex items-end gap-2 ${esMio ? 'justify-end' : 'justify-start'}`}>
+
+                        {/* Avatar del otro usuario */}
+                        {!esMio && (
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-1 ${
+                            mostrarAvatar ? colorAvatar(nombreUsuario) : 'invisible'
+                          }`}>
+                            {inicial}
+                          </div>
+                        )}
+
+                        <div className={`max-w-[72%] sm:max-w-md flex flex-col ${esMio ? 'items-end' : 'items-start'}`}>
+
+                          {/* Nombre (solo primer mensaje del grupo) */}
+                          {!esMio && !mismoDueno && (
+                            <span className="text-xs text-slate-400 mb-1 ml-1 font-medium">
+                              {nombreUsuario}
+                              {esProfesorMensaje && (
+                                <span className="ml-1.5 text-purple-400 font-semibold">· Profesor</span>
                               )}
                             </span>
                           )}
-                          {/* Burbuja: azul si es mío, gris si es de otro. */}
-                          <div className={`px-3 py-2 sm:px-4 rounded-2xl text-sm ${
+
+                          {/* Burbuja */}
+                          <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-md ${
                             esMio
-                              ? 'bg-primary text-white rounded-br-none'   // Burbuja azul a la derecha.
-                              : 'bg-gray-100 text-gray-800 rounded-bl-none' // Burbuja gris a la izquierda.
+                              ? 'bg-blue-600 text-white rounded-br-md'
+                              : 'bg-slate-700 text-slate-100 rounded-bl-md border border-slate-600'
                           }`}>
-                            {mensaje.content} {/* Texto del mensaje. */}
+                            {mensaje.content}
                           </div>
-                          {/* Hora del mensaje. */}
-                          <span className="text-xs text-gray-400 mt-1 mx-1">
+
+                          {/* Hora */}
+                          <span className="text-xs text-slate-500 mt-1 mx-1">
                             {formatearHora(mensaje.created_at)}
                           </span>
                         </div>
+
+                        {/* Avatar propio (a la derecha) */}
+                        {esMio && (
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-1 ${colorAvatar(perfil?.name)}`}>
+                            {perfil?.name?.charAt(0)?.toUpperCase()}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
-                  {/* Div invisible al que hacemos scroll para bajar al último mensaje. */}
                   <div ref={finalMensajesRef} />
                 </div>
               )}
             </div>
 
-            {/* Input de mensaje: siempre visible en la parte inferior. */}
-            {/* flex-shrink-0: no se encoge. */}
-            <div className="bg-white rounded-b-xl px-3 sm:px-4 py-3 shadow-sm border-t border-gray-100 flex-shrink-0">
+            {/* Input de mensaje */}
+            <div className="bg-slate-800 px-4 py-3 border-t border-slate-700 flex-shrink-0">
               <form onSubmit={handleEnviar} className="flex gap-2 items-center">
-                {/* Campo de texto con bordes redondeados (estilo chat). */}
                 <input
                   type="text"
                   value={nuevoMensaje}
-                  onChange={e => setNuevoMensaje(e.target.value)} // Actualiza el estado al escribir.
+                  onChange={e => setNuevoMensaje(e.target.value)}
                   placeholder="Escribe un mensaje..."
-                  className="flex-1 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                  maxLength={1000}  // Máximo 1000 caracteres por mensaje.
-                  disabled={enviando} // Deshabilita mientras se envía.
+                  className="flex-1 bg-slate-700 border border-slate-600 rounded-full px-4 py-2.5 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-colors"
+                  maxLength={1000}
+                  disabled={enviando}
                 />
-                {/* Botón de envío circular. */}
                 <button
                   type="submit"
-                  disabled={enviando || !nuevoMensaje.trim()} // Deshabilita si está enviando o el campo está vacío.
-                  className="bg-primary text-white w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center hover:bg-primary/90 transition disabled:opacity-40 flex-shrink-0 text-sm"
+                  disabled={enviando || !nuevoMensaje.trim()}
+                  className="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors disabled:opacity-30 flex-shrink-0 shadow-md"
                 >
-                  ➤ {/* Ícono de enviar. */}
+                  ➤
                 </button>
               </form>
             </div>
@@ -434,112 +355,130 @@ export default function GrupoDetalle() {
 
         {/* ============================================================ */}
         {/* PESTAÑA: ACTIVIDADES                                          */}
-        {/* Solo se renderiza cuando pestañaActiva === 'actividades'.    */}
         {/* ============================================================ */}
         {pestañaActiva === 'actividades' && (
-          <div className="flex-1 bg-white rounded-b-xl shadow-sm flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 border border-slate-700 border-t-0 rounded-b-2xl overflow-hidden bg-slate-800">
 
-            {/* Cabecera: descripción + botón "Nueva actividad" (solo profesores). */}
-            <div className="px-4 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0 gap-2">
-              <p className="text-gray-500 text-xs sm:text-sm">
-                {perfil?.role === 'teacher'
-                  ? 'Crea y gestiona las actividades.'  // Mensaje para profesores.
-                  : 'Actividades de tu profesor.'}       // Mensaje para estudiantes.
+            {/* Cabecera */}
+            <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between flex-shrink-0">
+              <p className="text-slate-400 text-xs sm:text-sm">
+                {esProfesor ? 'Gestiona las actividades de tu grupo.' : 'Actividades publicadas por tu profesor.'}
               </p>
-              {/* El botón "+ Nueva" solo aparece si el usuario es profesor. */}
-              {perfil?.role === 'teacher' && (
+              {esProfesor && (
                 <button
-                  onClick={() => setMostrarCrearActividad(true)} // Abre el modal de creación.
-                  className="bg-primary text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-primary/90 transition text-xs sm:text-sm font-medium flex-shrink-0"
+                  onClick={() => setMostrarCrearActividad(true)}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl transition-colors text-xs sm:text-sm font-semibold flex-shrink-0 shadow-sm flex items-center gap-1.5"
                 >
-                  + Nueva {/* Texto compacto en móvil. */}
+                  <span className="text-base leading-none">+</span> Nueva actividad
                 </button>
               )}
             </div>
 
-            {/* Mensaje de error en la pestaña de actividades. */}
+            {/* Alertas */}
             {errorActividades && (
-              <div className="mx-4 mt-3 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-xs">
-                {errorActividades}
+              <div className="mx-4 mt-3 bg-red-900/40 border border-red-700 text-red-300 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 flex-shrink-0">
+                ⚠️ {errorActividades}
               </div>
             )}
-            {/* Mensaje de éxito (crear actividad o entregar). */}
             {exitoActividades && (
-              <div className="mx-4 mt-3 bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-lg text-xs">
-                {exitoActividades}
+              <div className="mx-4 mt-3 bg-green-900/40 border border-green-700 text-green-300 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 flex-shrink-0">
+                ✅ {exitoActividades}
               </div>
             )}
 
-            {/* Lista de actividades con scroll. */}
+            {/* Lista de actividades */}
             <div className="flex-1 px-4 py-4 overflow-y-auto min-h-0">
               {cargandoActividades ? (
-                // Spinner de carga.
-                <div className="text-center text-gray-400 py-12 text-sm">
-                  Cargando actividades...
+                <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                  <div className="w-8 h-8 border-2 border-slate-600 border-t-blue-500 rounded-full animate-spin mb-3" />
+                  <p className="text-sm">Cargando actividades...</p>
                 </div>
               ) : actividades.length === 0 ? (
-                // Estado vacío: no hay actividades.
-                <div className="text-center py-16">
-                  <div className="text-5xl sm:text-6xl mb-4">📋</div>
-                  <p className="text-gray-500 text-sm sm:text-lg">
-                    {perfil?.role === 'teacher'
-                      ? '¡Crea la primera actividad!'                     // Para profesores.
-                      : 'Tu profesor aún no ha publicado actividades.'}    // Para estudiantes.
+                <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                  <div className="w-16 h-16 bg-slate-700 rounded-2xl flex items-center justify-center text-3xl mb-4 border border-slate-600">
+                    📋
+                  </div>
+                  <p className="text-slate-300 font-semibold text-base">
+                    {esProfesor ? '¡Crea la primera actividad!' : 'Sin actividades aún'}
                   </p>
+                  <p className="text-slate-500 text-sm mt-1 max-w-xs">
+                    {esProfesor
+                      ? 'Haz clic en "Nueva actividad" para publicar una tarea a tus estudiantes.'
+                      : 'Tu profesor aún no ha publicado ninguna actividad.'}
+                  </p>
+                  {esProfesor && (
+                    <button
+                      onClick={() => setMostrarCrearActividad(true)}
+                      className="mt-5 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+                    >
+                      + Nueva actividad
+                    </button>
+                  )}
                 </div>
               ) : (
-                // Lista de tarjetas de actividades.
-                <div className="space-y-3 sm:space-y-4">
-                  {actividades.map(actividad => {
-                    const yaEntregada = misEntregas.includes(actividad.id) // Verifica si ya entregué esta actividad.
+                <div className="space-y-3">
+                  {actividades.map((actividad, index) => {
+                    const yaEntregada = misEntregas.includes(actividad.id)
+                    // Colores rotativos para el borde izquierdo
+                    const bordes = ['border-blue-500', 'border-indigo-500', 'border-violet-500', 'border-sky-500', 'border-teal-500']
+                    const colorBorde = bordes[index % bordes.length]
+
                     return (
-                      // Tarjeta de cada actividad.
                       <div
                         key={actividad.id}
-                        className="border border-gray-100 rounded-xl p-4 sm:p-5 hover:shadow-sm transition"
+                        className={`bg-slate-700/60 border border-slate-600 border-l-4 ${colorBorde} rounded-2xl p-4 sm:p-5 hover:bg-slate-700 transition-colors`}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          {/* Columna izquierda: título, descripción, fecha. */}
                           <div className="flex-1 min-w-0">
-                            {/* Título de la actividad. */}
-                            <h3 className="font-bold text-gray-800 text-sm sm:text-base">
-                              {actividad.title}
-                            </h3>
-                            {/* Descripción (solo si existe). */}
+
+                            {/* Número + Título */}
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-xs text-slate-500 font-mono font-bold">
+                                #{String(index + 1).padStart(2, '0')}
+                              </span>
+                              <h3 className="font-bold text-slate-100 text-sm sm:text-base leading-tight">
+                                {actividad.title}
+                              </h3>
+                            </div>
+
+                            {/* Descripción */}
                             {actividad.description && (
-                              <p className="text-gray-500 text-xs sm:text-sm mt-1">
+                              <p className="text-slate-400 text-xs sm:text-sm mt-1 leading-relaxed">
                                 {actividad.description}
                               </p>
                             )}
-                            {/* Fecha de entrega (solo si el profesor la definió). */}
+
+                            {/* Fecha de entrega */}
                             {actividad.due_date && (
-                              <p className="text-xs text-orange-500 mt-2 font-medium">
-                                📅 {formatearFecha(actividad.due_date)}
-                              </p>
+                              <div className="mt-2.5 inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/30 text-orange-300 px-3 py-1 rounded-full text-xs font-medium">
+                                📅 Entrega: {formatearFecha(actividad.due_date)}
+                              </div>
                             )}
-                            {/* Fecha de creación de la actividad. */}
-                            <p className="text-xs text-gray-400 mt-1">
-                              {formatearFecha(actividad.created_at)}
+
+                            {/* Fecha publicación */}
+                            <p className="text-xs text-slate-500 mt-2">
+                              Publicada: {formatearFecha(actividad.created_at)}
                             </p>
                           </div>
 
-                          {/* Columna derecha: botón de entrega (solo estudiantes). */}
+                          {/* Botón de entrega (estudiantes) */}
                           {perfil?.role === 'student' && (
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 mt-1">
                               {yaEntregada ? (
-                                // Si ya entregó, muestra el badge verde "✓ Entregada".
-                                <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                                <span className="flex items-center gap-1.5 bg-green-500/20 text-green-300 border border-green-500/30 px-3 py-1.5 rounded-full text-xs font-semibold">
                                   ✓ Entregada
                                 </span>
                               ) : (
-                                // Si aún no entregó, muestra el botón "Entregar".
                                 <button
-                                  onClick={() => handleEntregar(actividad.id)} // Registra la entrega.
-                                  disabled={entregando === actividad.id}       // Deshabilita mientras procesa.
-                                  className="bg-primary text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm hover:bg-primary/90 transition disabled:opacity-50"
+                                  onClick={() => handleEntregar(actividad.id)}
+                                  disabled={entregando === actividad.id}
+                                  className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm"
                                 >
-                                  {/* Muestra "..." mientras procesa, o "Entregar" normalmente. */}
-                                  {entregando === actividad.id ? '...' : 'Entregar'}
+                                  {entregando === actividad.id ? (
+                                    <span className="flex items-center gap-1">
+                                      <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+                                    </span>
+                                  ) : 'Entregar'}
                                 </button>
                               )}
                             </div>
@@ -556,12 +495,12 @@ export default function GrupoDetalle() {
 
       </main>
 
-      {/* Modal de creación de actividad (solo visible cuando mostrarCrearActividad es true). */}
+      {/* Modal */}
       {mostrarCrearActividad && (
         <CrearActividad
-          grupoId={grupoId}                                        // ID del grupo donde se crea la actividad.
-          onActividadCreada={handleActividadCreada}                // Callback al crear exitosamente.
-          onCancelar={() => setMostrarCrearActividad(false)}       // Callback al cancelar.
+          grupoId={grupoId}
+          onActividadCreada={handleActividadCreada}
+          onCancelar={() => setMostrarCrearActividad(false)}
         />
       )}
     </div>
