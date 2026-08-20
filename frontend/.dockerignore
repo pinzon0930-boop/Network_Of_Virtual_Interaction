@@ -1,3 +1,21 @@
+# ============================================================
+# .dockerignore — Archivos excluidos del build de Docker
+# ============================================================
+# Similar al .gitignore, lista los archivos que Docker NO debe
+# copiar al contenedor durante el comando "COPY . ."
+# Esto hace el build más rápido y la imagen más segura.
+# ============================================================
+
 node_modules
+# node_modules: carpeta con todas las dependencias de npm.
+# NO se copia porque el Dockerfile ejecuta "npm install" dentro del contenedor,
+# que las reinstala automáticamente. Copiarlas sería lento e innecesario.
+
 dist
+# dist: carpeta con el build anterior de Vite (si existe localmente).
+# NO se copia porque el Dockerfile ejecuta "npm run build" para generarla fresca.
+
 .env
+# .env: archivo con las variables de entorno sensibles (URL de Supabase, claves).
+# NO se copia por seguridad — las variables se pasan como --build-arg al construir.
+# Esto evita que las credenciales queden dentro de la imagen de Docker.
