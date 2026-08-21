@@ -90,9 +90,11 @@ export default function ModalRubrica({ actividad, onCerrar }) {
 
               {/* Tarjeta que muestra el título y descripción de la actividad */}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-left mb-6">
-                <p className="font-semibold text-gray-800 text-sm">{actividad.titulo}</p>           {/* Título de la actividad */}
+                {/* Título de la actividad */}
+                <p className="font-semibold text-gray-800 text-sm">{actividad.titulo}</p>
+                {/* Descripción si existe — solo se muestra cuando la actividad tiene descripción */}
                 {actividad.descripcion && (
-                  <p className="text-gray-500 text-xs mt-1 leading-relaxed">{actividad.descripcion}</p> {/* Descripción si existe */}
+                  <p className="text-gray-500 text-xs mt-1 leading-relaxed">{actividad.descripcion}</p>
                 )}
               </div>
 
