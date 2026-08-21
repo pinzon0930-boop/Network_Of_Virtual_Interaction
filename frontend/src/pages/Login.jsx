@@ -41,7 +41,8 @@ function Login() {
         {/* Contenido del panel */}
         <div className="relative z-10 text-center">
           <div className="text-7xl mb-6">🎓</div>
-          <h1 className="text-4xl font-bold text-white mb-4">Educa AI</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">NOVI</h1>
+          <p className="text-blue-400 text-sm tracking-widest uppercase mb-4">Network Of Virtual Interaction</p>
           <p className="text-blue-200 text-lg max-w-xs leading-relaxed">
             La plataforma educativa que conecta profesores y estudiantes en tiempo real.
           </p>
@@ -71,7 +72,7 @@ function Login() {
           {/* Logo en móvil (el panel izquierdo está oculto) */}
           <div className="lg:hidden text-center mb-8">
             <div className="text-5xl mb-2">🎓</div>
-            <h1 className="text-2xl font-bold text-slate-800">Educa AI</h1>
+            <h1 className="text-2xl font-bold text-slate-800">NOVI</h1>
           </div>
 
           {/* Tarjeta del formulario */}
