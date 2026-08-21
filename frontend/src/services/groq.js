@@ -1,7 +1,6 @@
-import { supabase } from './supabase.js'
-
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
+const MODELO = 'openai/gpt-oss-20b'
 
 // ============================================================
 // FUNCIÓN: preguntarIA
@@ -15,7 +14,7 @@ export async function preguntarIA(pregunta) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
+      model: MODELO,
       messages: [
         {
           role: 'system',
@@ -48,7 +47,7 @@ export async function generarActividad(descripcion) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
+      model: MODELO,
       messages: [
         {
           role: 'system',
