@@ -15,6 +15,12 @@ import {
 } from '../services/actividades.js'
 import CrearActividad from '../components/CrearActividad.jsx'
 import AsistenteIA from '../components/AsistenteIA.jsx'
+// Nuevos modales de IA para profesores y estudiantes
+import ModalQuiz from '../components/ModalQuiz.jsx'
+import ModalRubrica from '../components/ModalRubrica.jsx'
+import ModalRetroalimentacion from '../components/ModalRetroalimentacion.jsx'
+import ModalExplicacion from '../components/ModalExplicacion.jsx'
+import { generarResumenGrupo } from '../services/groq.js'
 
 // ============================================================
 // PÁGINA: GrupoDetalle — Chat y Actividades del grupo
@@ -45,6 +51,17 @@ export default function GrupoDetalle() {
 
   // Estado: Asistente IA (solo estudiantes)
   const [mostrarAsistente, setMostrarAsistente] = useState(false)
+
+  // Estado: Modales IA — cada uno guarda null (cerrado) o el objeto actividad seleccionado
+  const [modalQuiz,       setModalQuiz]       = useState(false)   // Quiz no necesita actividad, solo abre/cierra
+  const [modalRubrica,    setModalRubrica]    = useState(null)    // { titulo, descripcion } de la actividad
+  const [modalRetro,      setModalRetro]      = useState(null)    // { titulo } de la actividad
+  const [modalExplicacion,setModalExplicacion]= useState(null)    // { titulo, descripcion } de la actividad
+
+  // Estado: Resumen semanal del grupo (inline, sin modal separado)
+  const [mostrarResumen,   setMostrarResumen]   = useState(false)  // Controla visibilidad del modal de resumen
+  const [resumenGrupo,     setResumenGrupo]     = useState('')     // Texto del resumen generado
+  const [cargandoResumen,  setCargandoResumen]  = useState(false)  // true mientras la IA procesa
 
   // ============================================================
   // EFECTOS
@@ -134,6 +151,21 @@ export default function GrupoDetalle() {
     setActividades(prev => [nuevaActividad, ...prev])
     setExitoActividades('¡Actividad creada exitosamente!')
     setTimeout(() => setExitoActividades(''), 3000)
+  }
+
+  // Función: genera un resumen del estado del grupo usando la IA
+  async function handleResumenGrupo() {
+    setMostrarResumen(true)
+    setCargandoResumen(true)
+    setResumenGrupo('')
+    try {
+      const resultado = await generarResumenGrupo(actividades)
+      setResumenGrupo(resultado)
+    } catch {
+      setResumenGrupo('No se pudo generar el resumen. Intenta de nuevo.')
+    } finally {
+      setCargandoResumen(false)
+    }
   }
 
   async function handleLogout() {
@@ -398,12 +430,33 @@ export default function GrupoDetalle() {
                 {esProfesor ? 'Gestiona las actividades de tu grupo.' : 'Actividades publicadas por tu profesor.'}
               </p>
               {esProfesor && (
-                <button
-                  onClick={() => setMostrarCrearActividad(true)}
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl transition-colors text-xs sm:text-sm font-semibold flex-shrink-0 shadow-sm flex items-center gap-1.5"
-                >
-                  <span className="text-base leading-none">+</span> Nueva actividad
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Botón resumen semanal — visible cuando hay actividades */}
+                  {actividades.length > 0 && (
+                    <button
+                      onClick={handleResumenGrupo}
+                      className="bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/40 text-purple-300 hover:text-purple-100 px-3 py-2 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5"
+                      title="Generar resumen del grupo con IA"
+                    >
+                      📈 <span className="hidden sm:inline">Resumen</span>
+                    </button>
+                  )}
+                  {/* Botón crear nueva actividad */}
+                  <button
+                    onClick={() => setMostrarCrearActividad(true)}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl transition-colors text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5"
+                  >
+                    <span className="text-base leading-none">+</span> Nueva actividad
+                  </button>
+                  {/* Botón para generar un quiz libre (sin actividad específica) */}
+                  <button
+                    onClick={() => setModalQuiz(true)}
+                    className="bg-violet-600/20 hover:bg-violet-600/40 border border-violet-500/40 text-violet-300 hover:text-violet-100 px-3 py-2 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5"
+                    title="Generar quiz con IA"
+                  >
+                    🎯 <span className="hidden sm:inline">Quiz</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -485,6 +538,34 @@ export default function GrupoDetalle() {
                             <p className="text-xs text-slate-500 mt-2">
                               Publicada: {formatearFecha(actividad.created_at)}
                             </p>
+
+                            {/* Botones IA para el PROFESOR — Rúbrica y Retroalimentación por actividad */}
+                            {esProfesor && (
+                              <div className="mt-3 flex gap-2 flex-wrap">
+                                <button
+                                  onClick={() => setModalRubrica({ titulo: actividad.title, descripcion: actividad.description })}
+                                  className="flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 hover:text-emerald-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                                >
+                                  📊 Rúbrica
+                                </button>
+                                <button
+                                  onClick={() => setModalRetro({ titulo: actividad.title })}
+                                  className="flex items-center gap-1 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-300 hover:text-orange-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                                >
+                                  💬 Retroalimentación
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Botón IA para el ESTUDIANTE — Explícame esta actividad */}
+                            {!esProfesor && (
+                              <button
+                                onClick={() => setModalExplicacion({ titulo: actividad.title, descripcion: actividad.description })}
+                                className="mt-3 flex items-center gap-1 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 hover:text-blue-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                              >
+                                🔍 Explícame esta actividad
+                              </button>
+                            )}
                           </div>
 
                           {perfil?.role === 'student' && (
@@ -535,6 +616,99 @@ export default function GrupoDetalle() {
           visible={mostrarAsistente}
           onClose={() => setMostrarAsistente(false)}
         />
+      )}
+
+      {/* ── MODALES IA ── */}
+
+      {/* Modal Quiz — el profesor genera preguntas de opción múltiple sobre cualquier tema */}
+      {modalQuiz && (
+        <ModalQuiz onCerrar={() => setModalQuiz(false)} />
+      )}
+
+      {/* Modal Rúbrica — genera criterios de evaluación para la actividad seleccionada */}
+      {modalRubrica && (
+        <ModalRubrica
+          actividad={modalRubrica}
+          onCerrar={() => setModalRubrica(null)}
+        />
+      )}
+
+      {/* Modal Retroalimentación — el profesor pega la respuesta del estudiante y recibe feedback */}
+      {modalRetro && (
+        <ModalRetroalimentacion
+          actividad={modalRetro}
+          onCerrar={() => setModalRetro(null)}
+        />
+      )}
+
+      {/* Modal Explicación — el estudiante recibe una explicación simple de la actividad */}
+      {modalExplicacion && (
+        <ModalExplicacion
+          actividad={modalExplicacion}
+          onCerrar={() => setModalExplicacion(null)}
+        />
+      )}
+
+      {/* Modal Resumen Semanal — inline, sin componente separado */}
+      {mostrarResumen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200 overflow-hidden">
+
+            {/* Cabecera */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">📈 Resumen del Grupo</h2>
+                <p className="text-purple-100 text-sm mt-0.5">{actividades.length} actividades registradas</p>
+              </div>
+              <button onClick={() => setMostrarResumen(false)} className="text-white/80 hover:text-white p-1">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Estado de carga */}
+              {cargandoResumen && (
+                <div className="flex flex-col items-center py-10 gap-3">
+                  <span className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+                  <p className="text-slate-500 text-sm">Analizando el grupo...</p>
+                </div>
+              )}
+
+              {/* Resumen generado */}
+              {resumenGrupo && !cargandoResumen && (
+                <>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm">🤖</span>
+                    </div>
+                    <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Educa AI resume</p>
+                  </div>
+                  <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-4">
+                    <p className="text-slate-800 text-sm leading-relaxed">{resumenGrupo}</p>
+                  </div>
+                  {/* Botón para regenerar el resumen */}
+                  <button
+                    onClick={handleResumenGrupo}
+                    className="w-full text-center text-xs text-slate-400 hover:text-slate-600 transition-colors py-1"
+                  >
+                    🔄 Generar otro resumen
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className="px-6 pb-5 flex justify-end">
+              <button
+                onClick={() => setMostrarResumen(false)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
