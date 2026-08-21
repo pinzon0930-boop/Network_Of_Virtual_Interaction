@@ -82,7 +82,7 @@ export default function AsistenteIA({ visible, onClose }) {
           fixed top-0 right-0 h-full w-full max-w-sm bg-white dark:bg-gray-900
           shadow-2xl z-40 flex flex-col
           transition-transform duration-300 ease-in-out
-          ${visible ? 'translate-x-0' : 'translate-x-full'}   // translate-x-0 = visible | translate-x-full = oculto fuera de pantalla
+          ${visible ? 'translate-x-0' : 'translate-x-full'}
         `}
       >
         {/* ── CABECERA DEL PANEL ── */}
@@ -183,7 +183,7 @@ export default function AsistenteIA({ visible, onClose }) {
                 flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-600
                 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white
                 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500
-                max-h-24 overflow-y-auto                       // Máximo 6 líneas, luego aparece scroll
+                max-h-24 overflow-y-auto
               "
               style={{ minHeight: '38px' }}                    // Altura mínima del textarea en píxeles
             />
