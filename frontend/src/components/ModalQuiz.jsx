@@ -1,176 +1,190 @@
-// Importa useState para manejar el tema, estado de carga y las preguntas generadas
+// Importa hooks de React necesarios para manejar estado y efectos
 import { useState } from 'react'
-// Importa la función que llama a la IA para generar preguntas de quiz
+
+// Importa la función que llama a la API de Groq para generar preguntas de quiz
 import { generarQuiz } from '../services/groq.js'
 
 // ============================================================
-// ModalQuiz — Modal para generar preguntas de opción múltiple con IA
+// ModalQuiz — Modal para que el profesor genere un quiz con IA
 // Props:
-//   onCerrar → función para cerrar el modal
+//   onCerrar → función que cierra el modal (llamada al presionar X o Cerrar)
 // ============================================================
 export default function ModalQuiz({ onCerrar }) {
-  const [tema, setTema] = useState('')               // Tema ingresado por el profesor
-  const [cantidad, setCantidad] = useState(5)        // Cantidad de preguntas a generar (default 5)
-  const [preguntas, setPreguntas] = useState([])     // Array de preguntas generadas por la IA
-  const [cargando, setCargando] = useState(false)    // true mientras la IA genera las preguntas
-  const [error, setError] = useState('')             // Mensaje de error si algo falla
-  const [copiado, setCopiado] = useState(false)      // true brevemente al copiar al portapapeles
 
-  // Función: llama a la IA con el tema y cantidad, actualiza el estado con las preguntas generadas
+  // Estado: tema sobre el que se generarán las preguntas (escrito por el profesor)
+  const [tema, setTema] = useState('')
+
+  // Estado: cantidad de preguntas a generar (el profesor elige en el select)
+  const [cantidad, setCantidad] = useState(5)
+
+  // Estado: array de preguntas generadas por la IA — cada elemento tiene { pregunta, opciones, correcta }
+  const [preguntas, setPreguntas] = useState([])
+
+  // Estado: true mientras la IA está procesando (muestra el spinner y deshabilita el botón)
+  const [cargando, setCargando] = useState(false)
+
+  // Estado: mensaje de error si falla la generación del quiz
+  const [error, setError] = useState('')
+
+  // Función: envía el tema y la cantidad a la IA y procesa el JSON devuelto
   async function handleGenerar() {
-    if (!tema.trim()) { setError('Escribe un tema para generar el quiz.'); return }
-    setCargando(true)
-    setError('')
-    setPreguntas([])  // Limpia preguntas anteriores antes de generar nuevas
+    if (!tema.trim() || cargando) return                    // No hace nada si no hay tema o ya hay una petición activa
+
+    setCargando(true)                                       // Activa el indicador de carga
+    setError('')                                            // Limpia cualquier error previo
+    setPreguntas([])                                        // Limpia las preguntas anteriores
+
     try {
-      const resultado = await generarQuiz(tema.trim(), cantidad)  // Llama a la API de Groq
-      setPreguntas(resultado)                                       // Guarda las preguntas en el estado
+      const resultado = await generarQuiz(tema, cantidad)   // Llama a la IA con el tema y la cantidad elegida
+      const parsed = JSON.parse(resultado)                  // Parsea el JSON devuelto por la IA
+      setPreguntas(parsed.preguntas || [])                  // Guarda las preguntas en el estado (o array vacío si falla)
     } catch {
+      // Si el parseo falla o hay error de red, muestra mensaje de error
       setError('Error al generar el quiz. Intenta de nuevo.')
     } finally {
-      setCargando(false)
+      setCargando(false)                                    // Siempre desactiva el spinner al terminar
     }
   }
 
-  // Función: convierte las preguntas a texto plano y las copia al portapapeles
-  function handleCopiar() {
+  // Función: copia todas las preguntas y respuestas al portapapeles como texto plano
+  function handleCopiarTodo() {
     const texto = preguntas.map((p, i) =>
-      `${i + 1}. ${p.pregunta}\n${p.opciones.join('\n')}\n✅ Respuesta: ${p.respuesta.toUpperCase()}`
-    ).join('\n\n')  // Cada pregunta separada por línea en blanco
-
-    navigator.clipboard.writeText(texto)   // Copia el texto al portapapeles del sistema
-    setCopiado(true)                        // Activa el estado "Copiado" brevemente
-    setTimeout(() => setCopiado(false), 2000)  // Vuelve al estado normal después de 2 segundos
+      `${i + 1}. ${p.pregunta}\n${p.opciones.join('\n')}\nRespuesta: ${p.correcta}`
+    ).join('\n\n')                                          // Separa cada pregunta con doble salto de línea
+    navigator.clipboard.writeText(texto)                   // Copia al portapapeles del navegador
   }
 
   return (
-    // Fondo oscuro que cubre toda la pantalla
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+    // Fondo oscuro semitransparente que cubre toda la pantalla (overlay del modal)
+    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+
+      {/* Contenedor del modal — ancho máximo 500px, scroll vertical si hay muchas preguntas */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
 
         {/* ── CABECERA ── */}
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-5 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-5 flex items-center justify-between flex-shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-white">🎯 Generar Quiz con IA</h2>
-            <p className="text-violet-100 text-sm mt-0.5">Crea preguntas de opción múltiple al instante</p>
+            <h2 className="text-xl font-bold text-white">🎯 Generar Quiz con IA</h2>        {/* Título del modal */}
+            <p className="text-violet-200 text-sm mt-0.5">Crea preguntas de opción múltiple al instante</p>  {/* Subtítulo */}
           </div>
-          {/* Botón cerrar */}
-          <button onClick={onCerrar} className="text-white/80 hover:text-white p-1">
+          {/* Botón X para cerrar el modal sin guardar nada */}
+          <button onClick={onCerrar} className="text-white/80 hover:text-white p-1 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        {/* ── CUERPO DEL MODAL (scrollable) ── */}
+        <div className="flex-1 overflow-y-auto p-6">
 
-          {/* ── CONTROLES: tema y cantidad ── */}
-          <div className="flex gap-3 mb-4">
-            {/* Campo: tema del quiz */}
+          {/* ── CONTROLES: tema + cantidad + botón generar ── */}
+          <div className="flex gap-2 mb-6">
+
+            {/* Campo de texto para que el profesor escriba el tema del quiz */}
             <input
               type="text"
-              value={tema}
-              onChange={e => { setTema(e.target.value); setError('') }}
-              onKeyDown={e => e.key === 'Enter' && handleGenerar()}  // Enter también genera
-              placeholder="Ej: Sistema solar, Revolución Francesa, Fracciones..."
-              className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
-              disabled={cargando}
+              value={tema}                                  // Valor controlado por el estado 'tema'
+              onChange={e => setTema(e.target.value)}       // Actualiza el estado con cada tecla
+              onKeyDown={e => e.key === 'Enter' && handleGenerar()} // Enter también dispara la generación
+              placeholder="Tema del quiz (ej: Fotosíntesis)"
+              className="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
 
-            {/* Selector: cantidad de preguntas */}
+            {/* Select para elegir cuántas preguntas generar */}
             <select
-              value={cantidad}
-              onChange={e => setCantidad(Number(e.target.value))}  // Convierte el valor a número
-              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
-              disabled={cargando}
+              value={cantidad}                              // Valor controlado por el estado 'cantidad'
+              onChange={e => setCantidad(Number(e.target.value))} // Convierte el string a número
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
+              {/* Opciones de cantidad — de 3 a 10 preguntas */}
               <option value={3}>3 preguntas</option>
               <option value={5}>5 preguntas</option>
-              <option value={8}>8 preguntas</option>
+              <option value={7}>7 preguntas</option>
               <option value={10}>10 preguntas</option>
             </select>
 
-            {/* Botón generar */}
+            {/* Botón para disparar la generación del quiz */}
             <button
               onClick={handleGenerar}
-              disabled={cargando || !tema.trim()}
-              className="bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 flex-shrink-0"
+              disabled={!tema.trim() || cargando}           // Deshabilitado si no hay tema o está cargando
+              className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               {cargando ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Generando...
-                </>
-              ) : '✨ Generar'}
+                // Spinner animado mientras la IA procesa
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                '✨'                                        // Ícono de estrella cuando no está cargando
+              )}
+              Generar
             </button>
           </div>
 
-          {/* Mensaje de error */}
-          {error && <p className="text-red-600 text-sm mb-4">⚠️ {error}</p>}
+          {/* Mensaje de error — solo visible si hubo un problema */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">
+              ⚠️ {error}
+            </div>
+          )}
 
           {/* ── LISTA DE PREGUNTAS GENERADAS ── */}
           {preguntas.length > 0 && (
-            <>
-              {/* Botón copiar todo al portapapeles */}
-              <div className="flex justify-between items-center mb-3">
-                <p className="text-sm font-semibold text-slate-700">{preguntas.length} preguntas generadas</p>
+            <div>
+              {/* Encabezado con contador y botón para copiar todo */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-gray-700">
+                  {preguntas.length} preguntas generadas                    {/* Muestra cuántas preguntas hay */}
+                </p>
+                {/* Botón para copiar todas las preguntas al portapapeles */}
                 <button
-                  onClick={handleCopiar}
-                  className="flex items-center gap-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors font-medium"
+                  onClick={handleCopiarTodo}
+                  className="text-xs text-violet-600 hover:text-violet-800 border border-violet-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
                 >
-                  {copiado ? '✅ ¡Copiado!' : '📋 Copiar todo'}
+                  📋 Copiar todo
                 </button>
               </div>
 
               {/* Renderiza cada pregunta como una tarjeta */}
               <div className="space-y-4">
                 {preguntas.map((p, i) => (
-                  <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                    {/* Número y texto de la pregunta */}
-                    <p className="font-semibold text-slate-800 text-sm mb-3">
-                      <span className="text-violet-600 mr-1">{i + 1}.</span> {p.pregunta}
+                  <div key={i} className="border border-gray-200 rounded-xl p-4">
+
+                    {/* Texto de la pregunta con su número */}
+                    <p className="font-medium text-gray-800 text-sm mb-3">
+                      <span className="text-violet-600 font-bold mr-1">{i + 1}.</span>
+                      {p.pregunta}
                     </p>
 
-                    {/* Opciones de respuesta */}
+                    {/* Lista de opciones de respuesta */}
                     <div className="space-y-1.5">
-                      {p.opciones.map((opcion, j) => {
-                        // Determina si esta opción es la respuesta correcta comparando la letra
-                        const letra = ['a', 'b', 'c', 'd'][j]
-                        const esCorrecta = p.respuesta.toLowerCase() === letra
-                        return (
-                          <div
-                            key={j}
-                            className={`text-xs px-3 py-1.5 rounded-lg ${
-                              esCorrecta
-                                ? 'bg-green-100 text-green-800 font-semibold border border-green-200'  // Opción correcta en verde
-                                : 'bg-white text-slate-600 border border-slate-200'                     // Opciones incorrectas en blanco
-                            }`}
-                          >
-                            {esCorrecta && '✅ '}{opcion}   {/* Muestra ✅ solo en la respuesta correcta */}
-                          </div>
-                        )
-                      })}
+                      {p.opciones.map((opcion, j) => (
+                        <div
+                          key={j}
+                          className={`px-3 py-2 rounded-lg text-sm ${
+                            opcion === p.correcta
+                              ? 'bg-green-50 border border-green-200 text-green-800 font-medium' // Respuesta correcta: fondo verde
+                              : 'bg-gray-50 border border-gray-200 text-gray-700'               // Incorrectas: fondo gris
+                          }`}
+                        >
+                          {/* Checkmark solo en la respuesta correcta */}
+                          {opcion === p.correcta && <span className="mr-1">✅</span>}
+                          {opcion}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
-            </>
-          )}
-
-          {/* Estado vacío — antes de generar */}
-          {preguntas.length === 0 && !cargando && !error && (
-            <div className="text-center py-12 text-slate-400">
-              <p className="text-4xl mb-3">🎯</p>
-              <p className="text-sm">Escribe un tema y presiona Generar para crear el quiz</p>
             </div>
           )}
         </div>
 
         {/* ── PIE DEL MODAL ── */}
-        <div className="px-6 py-4 border-t border-slate-100 flex justify-end">
+        <div className="px-6 py-4 border-t border-gray-200 flex justify-end flex-shrink-0">
+          {/* Botón para cerrar el modal */}
           <button
             onClick={onCerrar}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2 rounded-xl text-sm font-semibold transition-colors"
+            className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-colors"
           >
             Cerrar
           </button>
