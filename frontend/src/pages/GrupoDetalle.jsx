@@ -14,6 +14,7 @@ import {
   obtenerMisEntregas
 } from '../services/actividades.js'
 import CrearActividad from '../components/CrearActividad.jsx'
+import AsistenteIA from '../components/AsistenteIA.jsx'
 
 // ============================================================
 // PÁGINA: GrupoDetalle — Chat y Actividades del grupo
@@ -41,6 +42,9 @@ export default function GrupoDetalle() {
   const [entregando,             setEntregando]             = useState(null)
   const [errorActividades,       setErrorActividades]       = useState('')
   const [exitoActividades,       setExitoActividades]       = useState('')
+
+  // Estado: Asistente IA (solo estudiantes)
+  const [mostrarAsistente, setMostrarAsistente] = useState(false)
 
   // ============================================================
   // EFECTOS
@@ -218,9 +222,23 @@ export default function GrupoDetalle() {
                 {esProfesor ? '👨‍🏫 Mi grupo' : '📚 Mi clase'}
               </h1>
             </div>
-            <span className="text-slate-500 text-xs">
-              {pestañaActiva === 'chat' ? `${mensajes.length} mensajes` : `${actividades.length} actividades`}
-            </span>
+            <div className="flex items-center gap-2">
+              {/* Botón Asistente IA — solo para estudiantes en la pestaña chat */}
+              {!esProfesor && pestañaActiva === 'chat' && (
+                <button
+                  onClick={() => setMostrarAsistente(true)}
+                  className="flex items-center gap-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/40 text-indigo-300 hover:text-indigo-100 px-3 py-1 rounded-lg text-xs font-semibold transition-all"
+                  title="Abrir tutor IA"
+                >
+                  <span>🤖</span>
+                  <span className="hidden sm:inline">Preguntar a la IA</span>
+                  <span className="sm:hidden">IA</span>
+                </button>
+              )}
+              <span className="text-slate-500 text-xs">
+                {pestañaActiva === 'chat' ? `${mensajes.length} mensajes` : `${actividades.length} actividades`}
+              </span>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -276,6 +294,14 @@ export default function GrupoDetalle() {
                   </div>
                   <p className="text-slate-300 font-semibold text-base">¡Empieza la conversación!</p>
                   <p className="text-slate-500 text-sm mt-1">Sé el primero en escribir algo</p>
+                  {!esProfesor && (
+                    <button
+                      onClick={() => setMostrarAsistente(true)}
+                      className="mt-4 flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/40 text-indigo-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                    >
+                      🤖 ¿Tienes dudas? Pregunta a la IA
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -494,12 +520,20 @@ export default function GrupoDetalle() {
 
       </main>
 
-      {/* Modal */}
+      {/* Modal CrearActividad */}
       {mostrarCrearActividad && (
         <CrearActividad
           grupoId={grupoId}
           onActividadCreada={handleActividadCreada}
           onCancelar={() => setMostrarCrearActividad(false)}
+        />
+      )}
+
+      {/* Panel lateral Asistente IA (solo estudiantes) */}
+      {!esProfesor && (
+        <AsistenteIA
+          visible={mostrarAsistente}
+          onClose={() => setMostrarAsistente(false)}
         />
       )}
     </div>

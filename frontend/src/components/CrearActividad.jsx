@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { crearActividad } from '../services/actividades.js'
+import { generarActividad } from '../services/groq.js'
 import { useAuth } from '../context/AuthContext.jsx'
 
 // ============================================================
@@ -13,6 +14,27 @@ export default function CrearActividad({ grupoId, onActividadCreada, onCancelar 
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
   const { perfil } = useAuth()
+
+  // Estado: generador IA
+  const [temaIA, setTemaIA] = useState('')
+  const [generandoIA, setGenerandoIA] = useState(false)
+  const [errorIA, setErrorIA] = useState('')
+
+  async function handleGenerarConIA() {
+    if (!temaIA.trim()) { setErrorIA('Escribe un tema para generar la actividad.'); return }
+    setGenerandoIA(true)
+    setErrorIA('')
+    try {
+      const resultado = await generarActividad(temaIA.trim())
+      setTitulo(resultado.titulo)
+      setDescripcion(resultado.descripcion)
+      setErrorIA('')
+    } catch {
+      setErrorIA('Error al generar con IA. Intenta de nuevo.')
+    } finally {
+      setGenerandoIA(false)
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -40,6 +62,47 @@ export default function CrearActividad({ grupoId, onActividadCreada, onCancelar 
 
         <div className="p-6">
 
+          {/* ---- SECCIÓN: Generar con IA ---- */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-5">
+            <p className="text-xs font-semibold text-indigo-700 mb-2 flex items-center gap-1.5">
+              <span>✨</span> Generar con IA
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={temaIA}
+                onChange={e => { setTemaIA(e.target.value); setErrorIA('') }}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleGenerarConIA())}
+                placeholder="Ej: fracciones, células, Segunda Guerra Mundial..."
+                className="flex-1 bg-white border border-indigo-300 rounded-lg px-3 py-2 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                disabled={generandoIA}
+              />
+              <button
+                type="button"
+                onClick={handleGenerarConIA}
+                disabled={generandoIA || !temaIA.trim()}
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 flex-shrink-0"
+              >
+                {generandoIA ? (
+                  <>
+                    <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>✨ Generar</>
+                )}
+              </button>
+            </div>
+            {errorIA && (
+              <p className="text-red-600 text-xs mt-1.5">⚠️ {errorIA}</p>
+            )}
+            {!errorIA && (
+              <p className="text-indigo-500 text-xs mt-1.5">
+                La IA completará el título y la descripción automáticamente.
+              </p>
+            )}
+          </div>
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-5 text-sm flex items-center gap-2">
               <span>⚠️</span> {error}
@@ -60,7 +123,6 @@ export default function CrearActividad({ grupoId, onActividadCreada, onCancelar 
                 placeholder="Ej: Taller de matemáticas #1"
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 maxLength={200}
-                autoFocus
               />
             </div>
 
