@@ -225,7 +225,11 @@ created_at        created_at
 
 ## 👨‍💻 Autores
 
-**Nixson Pinzón**  **Roberto Hernández**  **Camilo Flórez** **Michael Lopez**
+- **Nixson Pinzón**
+- **Roberto Hernández**
+- **Camilo Flórez**
+- **Michael Lopez**
+
 Proyecto académico — Ingeniería de Sistemas
 
 ---
