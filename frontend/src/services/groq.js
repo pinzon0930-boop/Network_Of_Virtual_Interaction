@@ -133,7 +133,7 @@ export async function resumirActividad(titulo, descripcion) {
 export async function generarResumenGrupo(actividades) {
   // Convierte las actividades a texto para enviarlas a la IA
   const listaActividades = actividades
-    .map((a, i) => `${i + 1}. "${a.titulo}" — creada el ${new Date(a.created_at).toLocaleDateString('es-CO')}`)
+    .map((a, i) => `${i + 1}. "${a.title}" — creada el ${new Date(a.created_at).toLocaleDateString('es-CO')}`)
     .join('\n')
 
   return llamarGroq([
