@@ -15,7 +15,7 @@ export async function preguntarIA(pregunta) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama3-8b-8192',
+      model: 'gemma2-9b-it',
       messages: [
         {
           role: 'system',
@@ -48,7 +48,7 @@ export async function generarActividad(descripcion) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama3-8b-8192',
+      model: 'gemma2-9b-it',
       messages: [
         {
           role: 'system',
