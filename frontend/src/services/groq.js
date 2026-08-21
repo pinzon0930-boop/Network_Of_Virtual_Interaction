@@ -15,7 +15,7 @@ export async function preguntarIA(pregunta) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gemma2-9b-it',
+      model: 'llama-3.1-8b-instant',
       messages: [
         {
           role: 'system',
@@ -48,7 +48,7 @@ export async function generarActividad(descripcion) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gemma2-9b-it',
+      model: 'llama-3.1-8b-instant',
       messages: [
         {
           role: 'system',
@@ -68,6 +68,7 @@ export async function generarActividad(descripcion) {
   const data = await response.json()
   const texto = data.choices[0].message.content.trim()
 
+  // Extrae el JSON de la respuesta
   const match = texto.match(/\{[\s\S]*\}/)
   if (!match) throw new Error('La IA no devolvió un formato válido')
   return JSON.parse(match[0])
