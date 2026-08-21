@@ -16,7 +16,7 @@ export default function AsistenteIA({ visible, onClose }) {
   const [mensajes, setMensajes] = useState([
     {
       rol: 'ia',                                               // Identifica quién envió el mensaje ('ia' o 'usuario')
-      texto: '¡Hola! Soy **Educa AI**, tu asistente de estudio 🎓 Puedo ayudarte con cualquier duda académica. ¿Qué quieres aprender hoy?',
+      texto: '¡Hola! Soy **NOVI**, tu asistente de estudio 🎓 Puedo ayudarte con cualquier duda académica. ¿Qué quieres aprender hoy?',
     },
   ])
 
@@ -91,7 +91,7 @@ export default function AsistenteIA({ visible, onClose }) {
           <div className="flex items-center gap-2">
             <span className="text-2xl">🤖</span>             {/* Ícono del robot */}
             <div>
-              <p className="font-semibold text-sm leading-tight">Educa AI</p>    {/* Nombre del asistente */}
+              <p className="font-semibold text-sm leading-tight">NOVI</p>    {/* Nombre del asistente */}
               <p className="text-indigo-200 text-xs">Tutor inteligente</p>       {/* Subtítulo */}
             </div>
           </div>

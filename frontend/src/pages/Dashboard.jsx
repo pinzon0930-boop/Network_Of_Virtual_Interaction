@@ -28,7 +28,7 @@ function Dashboard() {
           {/* Logo */}
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">🎓</span>
-            <span className="text-lg font-bold text-white">Educa AI</span>
+            <span className="text-lg font-bold text-white">NOVI</span>
           </div>
 
           {/* Usuario y acciones */}

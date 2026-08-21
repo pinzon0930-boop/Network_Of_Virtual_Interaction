@@ -96,7 +96,7 @@ export default function ModalExplicacion({ actividad, onCerrar }) {
                 <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-sm">🤖</span>
                 </div>
-                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Educa AI Explica</p>
+                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">NOVI Explica</p>
               </div>
 
               {/* Caja con la explicación simplificada — lenguaje para estudiantes de 12 años */}

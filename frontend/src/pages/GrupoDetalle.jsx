@@ -281,7 +281,7 @@ export default function GrupoDetalle() {
               className="flex items-center gap-2 text-white font-bold"
             >
               <span className="text-xl">🎓</span>
-              <span className="hidden sm:inline text-base">Educa AI</span>
+              <span className="hidden sm:inline text-base">NOVI</span>
             </button>
           </div>
 
@@ -790,7 +790,7 @@ export default function GrupoDetalle() {
                     <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-sm">🤖</span>
                     </div>
-                    <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Educa AI Resume</p>
+                    <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide">NOVI Resume</p>
                   </div>
                   {/* Caja con el texto del resumen */}
                   <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-4">

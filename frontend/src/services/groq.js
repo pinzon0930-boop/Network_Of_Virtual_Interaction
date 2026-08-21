@@ -55,7 +55,7 @@ export async function preguntarIA(pregunta) {
   return llamarGroq([
     {
       role: 'system',                                        // Mensaje del sistema: define la personalidad/rol de la IA
-      content: 'Eres Educa AI, un tutor académico amigable para estudiantes de secundaria y universidad. Explicas conceptos de forma clara, concisa y motivadora. Usas ejemplos cotidianos cuando es posible.',
+      content: 'Eres NOVI, un tutor académico amigable para estudiantes de secundaria y universidad. Explicas conceptos de forma clara, concisa y motivadora. Usas ejemplos cotidianos cuando es posible.',
     },
     {
       role: 'user',                                          // Mensaje del usuario con la pregunta real del estudiante

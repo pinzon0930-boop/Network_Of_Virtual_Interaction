@@ -48,7 +48,7 @@ function Register() {
 
         <div className="relative z-10 text-center">
           <div className="text-7xl mb-6">🎓</div>
-          <h1 className="text-4xl font-bold text-white mb-4">Únete a Educa AI</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">Únete a NOVI</h1>
           <p className="text-blue-200 text-lg max-w-xs leading-relaxed">
             Crea tu cuenta en segundos y comienza a aprender o enseñar hoy mismo.
           </p>
@@ -77,7 +77,7 @@ function Register() {
           {/* Logo móvil */}
           <div className="lg:hidden text-center mb-8">
             <div className="text-5xl mb-2">🎓</div>
-            <h1 className="text-2xl font-bold text-slate-800">Educa AI</h1>
+            <h1 className="text-2xl font-bold text-slate-800">NOVI</h1>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">

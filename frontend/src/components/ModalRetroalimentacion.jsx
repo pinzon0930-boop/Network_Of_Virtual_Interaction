@@ -136,7 +136,7 @@ export default function ModalRetroalimentacion({ actividad, onCerrar }) {
                 <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-sm">🤖</span>
                 </div>
-                <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Educa AI Retroalimenta</p>
+                <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">NOVI Retroalimenta</p>
               </div>
 
               {/* Caja con el texto del feedback generado */}

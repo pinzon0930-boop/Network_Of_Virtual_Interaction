@@ -92,7 +92,7 @@ export default function Grupos() {
               className="flex items-center gap-2 text-white font-bold text-base"
             >
               <span className="text-xl">🎓</span>
-              <span className="hidden sm:inline">Educa AI</span>
+              <span className="hidden sm:inline">NOVI</span>
             </button>
           </div>
 
