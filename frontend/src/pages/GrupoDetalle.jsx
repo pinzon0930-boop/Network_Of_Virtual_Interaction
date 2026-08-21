@@ -78,15 +78,28 @@ export default function GrupoDetalle() {
     setMensajes(data || [])
   }
 
+  // FIX: usar el data retornado por enviarMensaje para agregar el mensaje
+  // inmediatamente al estado, sin esperar a Realtime
   async function handleEnviar(e) {
     e.preventDefault()
     if (!nuevoMensaje.trim() || enviando) return
     setEnviando(true)
     const textoAEnviar = nuevoMensaje.trim()
     setNuevoMensaje('')
-    const { error } = await enviarMensaje(grupoId, perfil.id, textoAEnviar)
+    const { data, error } = await enviarMensaje(grupoId, perfil.id, textoAEnviar)
     setEnviando(false)
-    if (error) { setNuevoMensaje(textoAEnviar); setErrorChat('Error al enviar el mensaje.') }
+    if (error) {
+      setNuevoMensaje(textoAEnviar)
+      setErrorChat('Error al enviar el mensaje.')
+    } else if (data) {
+      // Agrega el mensaje propio inmediatamente; si Realtime también lo trae,
+      // el check yaExiste evita que aparezca duplicado
+      setMensajes(prev => {
+        const yaExiste = prev.some(m => m.id === data.id)
+        if (yaExiste) return prev
+        return [...prev, data]
+      })
+    }
   }
 
   async function cargarActividades() {
@@ -135,8 +148,9 @@ export default function GrupoDetalle() {
     })
   }
 
-  // Genera un color de avatar consistente según el nombre
+  // FIX: retornar color neutro cuando el nombre es null/undefined (evita el avatar '?')
   function colorAvatar(nombre) {
+    if (!nombre) return 'bg-slate-500'
     const colores = [
       'bg-blue-500', 'bg-indigo-500', 'bg-violet-500',
       'bg-sky-500', 'bg-teal-500', 'bg-emerald-500',
@@ -242,7 +256,7 @@ export default function GrupoDetalle() {
               </div>
             )}
 
-            {/* Lista de mensajes — fondo oscuro con patrón sutil */}
+            {/* Lista de mensajes */}
             <div
               className="flex-1 overflow-y-auto min-h-0 px-4 py-5"
               style={{
@@ -271,7 +285,6 @@ export default function GrupoDetalle() {
                     const inicial = nombreUsuario?.charAt(0)?.toUpperCase() || '?'
                     const esProfesorMensaje = mensaje.users?.role === 'teacher'
 
-                    // Agrupar mensajes consecutivos del mismo usuario
                     const mensajeAnterior = mensajes[index - 1]
                     const mismoDueno = mensajeAnterior?.user_id === mensaje.user_id
                     const mostrarAvatar = !esMio && !mismoDueno
@@ -279,7 +292,6 @@ export default function GrupoDetalle() {
                     return (
                       <div key={mensaje.id} className={`flex items-end gap-2 ${esMio ? 'justify-end' : 'justify-start'}`}>
 
-                        {/* Avatar del otro usuario */}
                         {!esMio && (
                           <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-1 ${
                             mostrarAvatar ? colorAvatar(nombreUsuario) : 'invisible'
@@ -290,7 +302,6 @@ export default function GrupoDetalle() {
 
                         <div className={`max-w-[72%] sm:max-w-md flex flex-col ${esMio ? 'items-end' : 'items-start'}`}>
 
-                          {/* Nombre (solo primer mensaje del grupo) */}
                           {!esMio && !mismoDueno && (
                             <span className="text-xs text-slate-400 mb-1 ml-1 font-medium">
                               {nombreUsuario}
@@ -300,7 +311,6 @@ export default function GrupoDetalle() {
                             </span>
                           )}
 
-                          {/* Burbuja */}
                           <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-md ${
                             esMio
                               ? 'bg-blue-600 text-white rounded-br-md'
@@ -309,13 +319,11 @@ export default function GrupoDetalle() {
                             {mensaje.content}
                           </div>
 
-                          {/* Hora */}
                           <span className="text-xs text-slate-500 mt-1 mx-1">
                             {formatearHora(mensaje.created_at)}
                           </span>
                         </div>
 
-                        {/* Avatar propio (a la derecha) */}
                         {esMio && (
                           <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mb-1 ${colorAvatar(perfil?.name)}`}>
                             {perfil?.name?.charAt(0)?.toUpperCase()}
@@ -359,7 +367,6 @@ export default function GrupoDetalle() {
         {pestañaActiva === 'actividades' && (
           <div className="flex-1 flex flex-col min-h-0 border border-slate-700 border-t-0 rounded-b-2xl overflow-hidden bg-slate-800">
 
-            {/* Cabecera */}
             <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between flex-shrink-0">
               <p className="text-slate-400 text-xs sm:text-sm">
                 {esProfesor ? 'Gestiona las actividades de tu grupo.' : 'Actividades publicadas por tu profesor.'}
@@ -374,7 +381,6 @@ export default function GrupoDetalle() {
               )}
             </div>
 
-            {/* Alertas */}
             {errorActividades && (
               <div className="mx-4 mt-3 bg-red-900/40 border border-red-700 text-red-300 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 flex-shrink-0">
                 ⚠️ {errorActividades}
@@ -386,7 +392,6 @@ export default function GrupoDetalle() {
               </div>
             )}
 
-            {/* Lista de actividades */}
             <div className="flex-1 px-4 py-4 overflow-y-auto min-h-0">
               {cargandoActividades ? (
                 <div className="flex flex-col items-center justify-center h-full text-slate-500">
@@ -419,7 +424,6 @@ export default function GrupoDetalle() {
                 <div className="space-y-3">
                   {actividades.map((actividad, index) => {
                     const yaEntregada = misEntregas.includes(actividad.id)
-                    // Colores rotativos para el borde izquierdo
                     const bordes = ['border-blue-500', 'border-indigo-500', 'border-violet-500', 'border-sky-500', 'border-teal-500']
                     const colorBorde = bordes[index % bordes.length]
 
@@ -431,7 +435,6 @@ export default function GrupoDetalle() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
 
-                            {/* Número + Título */}
                             <div className="flex items-center gap-2 mb-1.5">
                               <span className="text-xs text-slate-500 font-mono font-bold">
                                 #{String(index + 1).padStart(2, '0')}
@@ -441,27 +444,23 @@ export default function GrupoDetalle() {
                               </h3>
                             </div>
 
-                            {/* Descripción */}
                             {actividad.description && (
                               <p className="text-slate-400 text-xs sm:text-sm mt-1 leading-relaxed">
                                 {actividad.description}
                               </p>
                             )}
 
-                            {/* Fecha de entrega */}
                             {actividad.due_date && (
                               <div className="mt-2.5 inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/30 text-orange-300 px-3 py-1 rounded-full text-xs font-medium">
                                 📅 Entrega: {formatearFecha(actividad.due_date)}
                               </div>
                             )}
 
-                            {/* Fecha publicación */}
                             <p className="text-xs text-slate-500 mt-2">
                               Publicada: {formatearFecha(actividad.created_at)}
                             </p>
                           </div>
 
-                          {/* Botón de entrega (estudiantes) */}
                           {perfil?.role === 'student' && (
                             <div className="flex-shrink-0 mt-1">
                               {yaEntregada ? (
