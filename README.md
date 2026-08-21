@@ -223,9 +223,9 @@ created_at        created_at
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
-**Nixson Pinzón**  
+**Nixson Pinzón**  **Roberto Hernandez**  **Camilo Florez**
 Proyecto académico — Ingeniería de Sistemas
 
 ---
