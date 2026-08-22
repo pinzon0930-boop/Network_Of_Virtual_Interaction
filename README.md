@@ -22,9 +22,9 @@ NOVI es una SPA (Single Page Application) que conecta profesores y estudiantes e
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
-### Para profesores 👨‍🏫
+### Para profesores 
 - **Gestión de grupos** — Crea grupos de clase con código de invitación único
 - **Chat en tiempo real** — Comunicación instantánea con todos los miembros del grupo (Supabase Realtime)
 - **Creación de actividades** — Genera títulos y descripciones de actividades con IA
@@ -33,7 +33,7 @@ NOVI es una SPA (Single Page Application) que conecta profesores y estudiantes e
 - **Retroalimentación con IA** — Analiza respuestas de estudiantes y genera feedback constructivo
 - **Resumen del grupo** — Panorama del estado del grupo con recomendaciones pedagógicas
 
-### Para estudiantes 📚
+### Para estudiantes 
 - **Unirse por código** — Acceso instantáneo a grupos con un código de 6 caracteres
 - **Chat grupal** — Participación en la conversación del grupo en tiempo real
 - **Tutor NOVI** — Asistente académico disponible en el panel lateral para resolver dudas
@@ -41,7 +41,7 @@ NOVI es una SPA (Single Page Application) que conecta profesores y estudiantes e
 
 ---
 
-## 🛠️ Stack tecnológico
+## Stack tecnológico
 
 | Capa | Tecnología |
 |------|------------|
@@ -55,26 +55,32 @@ NOVI es una SPA (Single Page Application) que conecta profesores y estudiantes e
 
 ---
 
-## 📸 Capturas de pantalla
+## Capturas de pantalla
 
-| Login | Dashboard |
+| Login | Crear cuenta |
 |-------|-----------|
-| ![Login](docs/screenshots/login.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+| <img width="1211" height="556" alt="{A5B385FF-27D2-4C4B-8E53-06AE5AF1D7A8}" src="https://github.com/user-attachments/assets/4a956e17-4a37-4fa2-80e4-df08c1343b59" />
+ | <img width="399" height="571" alt="{172E1BFF-0A40-4268-8616-21208DA32EFA}" src="https://github.com/user-attachments/assets/51605225-d775-47ac-b345-6dbef15f321c" />
+ |
 
 | Chat grupal | Tutor NOVI |
 |-------------|-----------|
-| ![Chat](docs/screenshots/chat.png) | ![Tutor](docs/screenshots/tutor.png) |
+| <img width="838" height="590" alt="{B3C05C4E-1677-4964-9AE4-3553B433AF8C}" src="https://github.com/user-attachments/assets/ab79fb7e-4802-4585-b421-de44d8db638c" />
+| <img width="1113" height="602" alt="{37EF751D-2641-4189-863F-122D04065169}" src="https://github.com/user-attachments/assets/6b400175-99f2-48be-a7ff-178cf566881c" />
+ |
 
 | Generador de quiz | Rúbrica automática |
 |-------------------|--------------------|
-| ![Quiz](docs/screenshots/quiz.png) | ![Rubrica](docs/screenshots/rubrica.png) |
+| <img width="1920" height="939" alt="image" src="https://github.com/user-attachments/assets/d53bd5e8-fe64-4811-8507-142656b321cc" />
+ | <img width="1920" height="943" alt="image" src="https://github.com/user-attachments/assets/f3eb2557-2076-42be-a813-55ec561473c4" />
+ |
 
 ---
 
-## 📁 Estructura del proyecto
+## Estructura del proyecto
 
 ```
-educa-ai/
+NOVI/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -100,14 +106,14 @@ educa-ai/
 │   │   └── main.jsx                   # Entry point
 │   ├── index.html
 │   └── vite.config.js
-├── backend/                           # (Reservado para futuras extensiones)
+├── backend/                           # Reservado para futuras extensiones
 ├── database/                          # Scripts SQL de inicialización
 └── .gitignore
 ```
 
 ---
 
-## 🚀 Instalación local
+## Instalación local
 
 ### Prerrequisitos
 - Node.js 18+
@@ -118,8 +124,8 @@ educa-ai/
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/pinzon0930-boop/educa-ai.git
-cd educa-ai/frontend
+git clone https://github.com/pinzon0930-boop/Network_Of_Virtual_Interaction.git
+cd Network_Of_Virtual_Interaction/frontend
 ```
 
 ### 2. Instalar dependencias
@@ -138,7 +144,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 VITE_GROQ_API_KEY=gsk_...
 ```
 
-> ⚠️ **Importante:** Nunca compartas ni subas tus claves al repositorio. El archivo `.env` ya está incluido en `.gitignore`.
+>  **Importante:** Nunca compartas ni subas tus claves al repositorio. El archivo `.env` ya está incluido en `.gitignore`.
 
 ### 4. Inicializar la base de datos
 
@@ -161,7 +167,7 @@ La aplicación estará disponible en `http://localhost:5173`.
 
 ---
 
-## 🌐 Deploy en Render
+## Deploy en Render
 
 NOVI está configurado para desplegarse como **Static Site** en Render.
 
@@ -175,7 +181,7 @@ Recuerda agregar las tres variables de entorno (`VITE_SUPABASE_URL`, `VITE_SUPAB
 
 ---
 
-## 🔑 Variables de entorno
+## Variables de entorno
 
 | Variable | Descripción | Dónde obtenerla |
 |----------|-------------|-----------------|
@@ -185,7 +191,7 @@ Recuerda agregar las tres variables de entorno (`VITE_SUPABASE_URL`, `VITE_SUPAB
 
 ---
 
-## 🤖 Integración con IA (Groq)
+## Integración con IA (Groq)
 
 NOVI usa la API de Groq con el modelo `openai/gpt-oss-20b` a través de siete funciones especializadas en `services/groq.js`:
 
@@ -201,7 +207,7 @@ NOVI usa la API de Groq con el modelo `openai/gpt-oss-20b` a través de siete fu
 
 ---
 
-## 🗄️ Modelo de datos
+## Modelo de datos
 
 ```
 profiles          groups            group_members
@@ -223,7 +229,7 @@ created_at        created_at
 
 ---
 
-## 👨‍💻 Autores
+## Autores
 
 - **Nixson Pinzón**
 - **Roberto Hernández**
