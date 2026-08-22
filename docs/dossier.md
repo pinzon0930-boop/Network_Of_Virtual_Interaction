@@ -174,8 +174,6 @@ Con el índice en `group_id` y el pool aumentado, la hipótesis es que el P95 ba
 | Hipótesis sellada | `docs/hipotesis.md` |
 | ADR Supabase | `docs/adr/001-supabase-como-backend.md` |
 | ADR Groq | `docs/adr/002-groq-como-proveedor-ia.md` |
-| C4 Nivel 1 | `docs/arquitectura/c4-nivel1-contexto.md` |
-| C4 Nivel 2 | `docs/arquitectura/c4-nivel2-contenedores.md` |
 | Spike Realtime | `docs/spike/001-realtime-websockets.md` |
 | Script de carga | `tests/carga.js` |
 | Fitness function | `tests/fitness.js` |
