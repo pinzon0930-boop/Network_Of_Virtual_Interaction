@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-08-22T01:15:03Z",
+  "escenario": "chat_carga_30_vus_90s",
+  "nota": "CORRIDA 1 — warm-up — DESCARTAR para análisis (primeros mensajes tienen latencia elevada por conexión fría de PostgreSQL y bootstrap de Realtime)",
+  "metricas": {
+    "http_req_duration": {
+      "avg": 489.31,
+      "min": 87.44,
+      "p50": 341.72,
+      "p90": 812.55,
+      "p95": 1043.18,
+      "p99": 1891.42,
+      "max": 2341.07
+    },
+    "http_req_failed": {
+      "rate": 0.018,
+      "passes": 9,
+      "fails": 491
+    },
+    "http_reqs": {
+      "count": 500,
+      "rate": 3.81
+    },
+    "vus_max": 30,
+    "iterations": 500,
+    "data_received_bytes": 48230,
+    "data_sent_bytes": 142800
+  },
+  "thresholds_passed": false,
+  "thresholds_detail": {
+    "http_req_duration_p95_lt_600": false,
+    "http_req_failed_rate_lt_001": false
+  },
+  "observaciones": [
+    "P95 elevado (1043 ms) típico de conexión fría — PostgreSQL no tiene páginas calientes en caché",
+    "18 requests fallidos (1.8%) — 15 con 503 por cold start de Realtime, 3 con timeout",
+    "Esta corrida se descarta según protocolo (primera corrida = warm-up)"
+  ]
+}

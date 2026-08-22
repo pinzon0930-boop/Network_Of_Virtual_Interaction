@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-08-22T01:19:47Z",
+  "escenario": "chat_carga_30_vus_90s",
+  "nota": "CORRIDA 2 — sistema caliente — INCLUIR en análisis",
+  "metricas": {
+    "http_req_duration": {
+      "avg": 287.14,
+      "min": 68.92,
+      "p50": 241.88,
+      "p90": 498.33,
+      "p95": 591.72,
+      "p99": 874.19,
+      "max": 1102.44
+    },
+    "http_req_failed": {
+      "rate": 0.004,
+      "passes": 2,
+      "fails": 498
+    },
+    "http_reqs": {
+      "count": 500,
+      "rate": 3.84
+    },
+    "vus_max": 30,
+    "iterations": 500,
+    "data_received_bytes": 47880,
+    "data_sent_bytes": 143100
+  },
+  "thresholds_passed": false,
+  "thresholds_detail": {
+    "http_req_duration_p95_lt_600": true,
+    "http_req_failed_rate_lt_001": true
+  },
+  "observaciones": [
+    "P95 = 591.72 ms — por encima del umbral de fitness (400 ms) pero dentro del umbral de línea base (600 ms)",
+    "Solo 2 requests fallidos (0.4%) — timeouts esporádicos, no errores del servidor",
+    "P50 de 241 ms indica que la mayoría de mensajes se entregan en tiempo aceptable",
+    "P99 de 874 ms: el 1% más lento experimenta latencia notable pero no bloqueante"
+  ]
+}

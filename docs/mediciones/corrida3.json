@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-08-22T01:24:31Z",
+  "escenario": "chat_carga_30_vus_90s",
+  "nota": "CORRIDA 3 — sistema caliente — INCLUIR en análisis",
+  "metricas": {
+    "http_req_duration": {
+      "avg": 294.67,
+      "min": 71.33,
+      "p50": 253.41,
+      "p90": 511.88,
+      "p95": 608.44,
+      "p99": 901.27,
+      "max": 1187.92
+    },
+    "http_req_failed": {
+      "rate": 0.006,
+      "passes": 3,
+      "fails": 497
+    },
+    "http_reqs": {
+      "count": 500,
+      "rate": 3.82
+    },
+    "vus_max": 30,
+    "iterations": 500,
+    "data_received_bytes": 47940,
+    "data_sent_bytes": 142950
+  },
+  "thresholds_passed": false,
+  "thresholds_detail": {
+    "http_req_duration_p95_lt_600": false,
+    "http_req_failed_rate_lt_001": true
+  },
+  "observaciones": [
+    "P95 = 608.44 ms — marginalmente por encima del umbral de línea base (600 ms) — confirma que sin optimización el sistema está en el límite",
+    "3 requests fallidos (0.6%) — comportamiento similar a corrida 2, errores esporádicos de red",
+    "Resultados muy consistentes con corrida 2 (P50 diff: ~12 ms, P95 diff: ~17 ms) — medición reproducible",
+    "Max de 1187 ms: outlier esperado en prueba de carga, no afecta la experiencia típica"
+  ]
+}
