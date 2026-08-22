@@ -38,7 +38,20 @@ export function AuthProvider({ children }) {
     // Aquí verificamos si ya hay un usuario con sesión activa.
 
     // Obtiene la sesión actual de Supabase (si el usuario ya había iniciado sesión antes).
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Si el token de acceso expiró, Supabase intenta renovarlo con el refresh token.
+    // Si ese intento devuelve 400 (token inválido o expirado), "error" lo capturamos
+    // y cerramos la sesión limpiamente para evitar bucles de error.
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+
+      if (error) {
+        // El refresh token expiró o es inválido — cerramos sesión y limpiamos el estado.
+        // Esto evita el error 400 repetido en consola y lleva al usuario al login.
+        await supabase.auth.signOut()
+        setUsuario(null)
+        setPerfil(null)
+        setCargando(false)
+        return
+      }
 
       if (session?.user) {
         // Si hay sesión activa, guarda el usuario y obtiene su perfil.
@@ -54,13 +67,22 @@ export function AuthProvider({ children }) {
     // onAuthStateChange se ejecuta automáticamente cuando el estado de autenticación cambia.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
 
+      // Cuando el token expira y Supabase no puede renovarlo, dispara SIGNED_OUT.
+      // También manejamos USER_DELETED por si el usuario fue eliminado de Supabase.
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setUsuario(null)
+        setPerfil(null)
+        setCargando(false)
+        return
+      }
+
       if (session?.user) {
-        // Si hay un usuario en la nueva sesión, actualiza el estado.
+        // Si hay un usuario en la nueva sesión (login o TOKEN_REFRESHED), actualiza el estado.
         setUsuario(session.user)
         const { data } = await obtenerPerfil(session.user.id)
         setPerfil(data)
       } else {
-        // Si no hay usuario (logout), limpia el estado.
+        // Si no hay usuario, limpia el estado.
         setUsuario(null)
         setPerfil(null)
       }
