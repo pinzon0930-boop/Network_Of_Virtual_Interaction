@@ -1,66 +1,29 @@
 ```mermaid
   flowchart LR
 
-E1["ESTUDIANTE
+    EST["ESTUDIANTE<br/><br/>Usuario de la plataforma"]
+    PROF["PROFESOR<br/><br/>Usuario de la plataforma"]
 
-Consulta actividades
-Participa en grupos
-Utiliza herramientas de IA"]
+    subgraph NOVI["NOVI — Plataforma educativa"]
+        direction TB
 
-P1["PROFESOR
+        WEB["Aplicación Web<br/><br/>Interfaz de usuario<br/>Gestión de grupos<br/>Gestión de actividades<br/>Comunicación grupal"]
 
-Administra grupos
-Crea actividades
-Genera quizzes y rúbricas"]
+        AUTH["Supabase Auth<br/><br/>Autenticación y gestión<br/>de sesiones"]
 
-N["🧑‍💻 NOVI
+        DB["PostgreSQL — Supabase<br/><br/>Perfiles<br/>Grupos y membresías<br/>Mensajes<br/>Actividades<br/>Row Level Security"]
 
-Aplicación web
+        REALTIME["Supabase Realtime<br/><br/>Comunicación en tiempo real<br/>Actualización de mensajes"]
 
-Gestión de grupos
-Gestión de actividades
-Comunicación grupal
-Herramientas de IA"]
+        WEB -->|"Autentica usuarios"| AUTH
+        WEB -->|"Consulta y almacena datos"| DB
+        WEB -->|"Gestiona comunicación"| REALTIME
+    end
 
-A["🔐 SUPABASE AUTH
+    GROQ["Groq API<br/><br/>Servicio externo de<br/>Inteligencia Artificial"]
 
-Registro de usuarios
-Inicio de sesión
-Cierre de sesión
-Gestión de sesiones"]
-
-DB["🗄️ POSTGRESQL SUPABASE
-
-Perfiles
-Grupos y membresías
-Mensajes
-Actividades
-Row Level Security"]
-
-R["⚡ SUPABASE REALTIME
-
-Comunicación en tiempo real
-Actualización de mensajes
-WebSockets"]
-
-G["🤖 GROQ API
-
-Servicio externo de
-Inteligencia Artificial"]
-
-RE["☁️ RENDER
-
-Plataforma de despliegue
-Static Site
-Directorio dist"]
-
-E1 -->|"Utiliza"| N
-P1 -->|"Administra"| N
-
-N -->|"Autentica usuarios"| A
-N -->|"Consulta y almacena"| DB
-N -->|"Comunicación en tiempo real"| R
-N -->|"Solicita servicios de IA"| G
-
-RE -->|"Despliega"| N
+    EST -->|"Utiliza"| WEB
+    PROF -->|"Administra"| WEB
+    WEB -->|"Solicita servicios de IA"| GROQ
+    GROQ -->|"Devuelve respuestas generadas"| WEB
 ```
