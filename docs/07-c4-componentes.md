@@ -244,3 +244,10 @@ Por lo anterior, el modelo C4 Nivel 3 presenta una representación trazable
 del sistema actual, permitiendo relacionar cada componente arquitectónico con
 su responsabilidad, archivo o módulo de implementación, símbolo verificable y
 relación arquitectónica correspondiente.
+
+
+Repositorio:
+https://github.com/pinzon0930-boop/Network_Of_Virtual_Interaction
+
+Rama:
+master
