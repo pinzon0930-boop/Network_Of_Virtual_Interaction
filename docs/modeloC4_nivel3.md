@@ -1,127 +1,113 @@
 ```mermaid
   flowchart TB
 
-N["🧑‍💻 NOVI
+    subgraph NOVI["NOVI — Aplicación Web"]
+        direction TB
 
-Sistema de plataforma educativa"]
+        subgraph CORE["Componentes funcionales"]
+            direction LR
 
-A["🔐 Componente de Autenticación
+            AUTHC["Autenticación<br/><br/>
+            Registro de usuarios<br/>
+            Inicio de sesión<br/>
+            Cierre de sesión<br/>
+            Control de acceso"]
 
-Registro
-Inicio de sesión
-Cierre de sesión
-Control de acceso"]
+            GROUP["Gestión de Grupos<br/><br/>
+            Creación y consulta de grupos<br/>
+            Gestión de membresías<br/>
+            Relación usuarios-grupos"]
 
-G["👥 Componente de Gestión de Grupos
+            MSG["Gestión de Mensajes<br/><br/>
+            Envío y consulta de mensajes<br/>
+            Comunicación grupal<br/>
+            Actualizaciones en tiempo real"]
 
-Crear grupos
-Consultar grupos
-Gestionar membresías
-Relación usuarios-grupos"]
+            ACT["Gestión de Actividades<br/><br/>
+            Creación y consulta de actividades<br/>
+            Información de actividades<br/>
+            Asociación con grupos"]
+        end
 
-M["💬 Componente de Gestión de Mensajes
+        subgraph AI["Componentes de Inteligencia Artificial"]
+            direction LR
 
-Enviar mensajes
-Consultar mensajes
-Actualizaciones en tiempo real
-Comunicación grupal"]
+            TUTOR["Asistencia Académica<br/><br/>
+            Tutor NOVI<br/>
+            Consultas académicas<br/>
+            Apoyo a estudiantes"]
 
-AC["📚 Componente de Gestión de Actividades
+            GENACT["Generación de Actividades<br/><br/>
+            Generación de títulos<br/>
+            Generación de descripciones<br/>
+            Basado en un tema"]
 
-Crear actividades
-Consultar actividades
-Información de actividades
-Asociación con grupos"]
+            QUIZ["Generación de Quizzes<br/><br/>
+            Generación de preguntas<br/>
+            Opción múltiple<br/>
+            Evaluación estructurada"]
 
-IA1["🤖 Asistencia Académica IA
+            RUBRIC["Generación de Rúbricas<br/><br/>
+            Criterios de evaluación<br/>
+            Niveles de evaluación<br/>
+            Instrumentos de evaluación"]
 
-Tutor NOVI
-Consultas académicas
-Apoyo a estudiantes"]
+            FEEDBACK["Retroalimentación<br/><br/>
+            Análisis de respuestas<br/>
+            Generación de observaciones<br/>
+            Seguimiento académico"]
 
-IA2["✨ Generación de Actividades IA
+            EXPLAIN["Explicación Simplificada<br/><br/>
+            Transformación de instrucciones<br/>
+            Lenguaje sencillo<br/>
+            Facilita la comprensión"]
 
-Genera títulos
-Genera descripciones
-A partir de un tema"]
+            SUMMARY["Resumen del Grupo<br/><br/>
+            Estado de actividades<br/>
+            Recomendaciones pedagógicas<br/>
+            Seguimiento del grupo"]
+        end
 
-IA3["📝 Generación de Quizzes
+        AUTHC -->|"Autentica"| AUTH
+        GROUP -->|"Consulta y gestiona"| DB
+        MSG -->|"Almacena y consulta"| DB
+        ACT -->|"Almacena y consulta"| DB
 
-Genera preguntas
-Opción múltiple
-Evaluación estructurada"]
+        MSG -->|"Gestiona cambios en tiempo real"| RT
 
-IA4["📋 Generación de Rúbricas
+        TUTOR -->|"Solicita generación de contenido"| GROQ
+        GENACT -->|"Solicita generación de contenido"| GROQ
+        QUIZ -->|"Solicita generación de contenido"| GROQ
+        RUBRIC -->|"Solicita generación de contenido"| GROQ
+        FEEDBACK -->|"Solicita análisis"| GROQ
+        EXPLAIN -->|"Solicita transformación"| GROQ
+        SUMMARY -->|"Solicita análisis"| GROQ
+    end
 
-Criterios de evaluación
-Niveles de evaluación
-Instrumentos de evaluación"]
+    AUTH["Supabase Auth<br/><br/>
+    Servicio externo de autenticación"]
 
-IA5["💡 Retroalimentación IA
+    DB["PostgreSQL — Supabase<br/><br/>
+    Persistencia de datos<br/>
+    Usuarios<br/>
+    Grupos y membresías<br/>
+    Mensajes<br/>
+    Actividades<br/>
+    Row Level Security"]
 
-Analiza respuestas
-Genera observaciones
-Apoya el seguimiento"]
+    RT["Supabase Realtime<br/><br/>
+    Comunicación en tiempo real<br/>
+    Suscripción a cambios"]
 
-IA6["📖 Explicación Simplificada
+    GROQ["Groq API<br/><br/>
+    Servicio externo de<br/>
+    Inteligencia Artificial"]
 
-Transforma instrucciones
-Lenguaje sencillo
-Facilita la comprensión"]
+    classDef component fill:#1976D2,stroke:#90CAF9,color:#FFFFFF,stroke-width:2px;
+    classDef ai fill:#1565C0,stroke:#64B5F6,color:#FFFFFF,stroke-width:2px;
+    classDef external fill:#616161,stroke:#BDBDBD,color:#FFFFFF,stroke-width:2px;
 
-IA7["📊 Resumen del Grupo
-
-Estado de actividades
-Recomendaciones pedagógicas
-Seguimiento del grupo"]
-
-AUTH["Supabase Auth
-
-Servicio de autenticación"]
-
-DB["PostgreSQL Supabase
-
-Usuarios
-Grupos
-Membresías
-Mensajes
-Actividades"]
-
-RT["Supabase Realtime
-
-Actualizaciones en tiempo real
-WebSockets"]
-
-GROQ["Groq API
-
-Servicio externo de
-Inteligencia Artificial"]
-
-N --> A
-N --> G
-N --> M
-N --> AC
-N --> IA1
-N --> IA2
-N --> IA3
-N --> IA4
-N --> IA5
-N --> IA6
-N --> IA7
-
-A -->|"Autentica usuarios"| AUTH
-
-G -->|"Consulta y gestiona"| DB
-M -->|"Almacena y consulta"| DB
-AC -->|"Almacena y consulta"| DB
-
-M -->|"Suscripción a cambios"| RT
-
-IA1 -->|"Solicita IA"| GROQ
-IA2 -->|"Solicita IA"| GROQ
-IA3 -->|"Solicita IA"| GROQ
-IA4 -->|"Solicita IA"| GROQ
-IA5 -->|"Solicita IA"| GROQ
-IA6 -->|"Solicita IA"| GROQ
-IA7 -->|"Solicita IA"| GROQ
+    class AUTHC,GROUP,MSG,ACT component;
+    class TUTOR,GENACT,QUIZ,RUBRIC,FEEDBACK,EXPLAIN,SUMMARY ai;
+    class AUTH,DB,RT,GROQ external;
 ```
