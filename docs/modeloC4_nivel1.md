@@ -1,19 +1,43 @@
 ```mermaid 
-C4Context
-  title System Context diagram for NOVI
+flowchart LR
 
-  Person(estudiante, "Estudiante", "Consulta actividades, participa en grupos y utiliza herramientas de IA")
-  Person(profesor, "Profesor", "Administra grupos, crea actividades y genera quizzes y rúbricas")
-  System(novi, "NOVI", "Plataforma educativa para gestión académica, comunicación grupal y herramientas de IA")
-  System_Ext(groq, "Groq API", "Servicio externo de Inteligencia Artificial")
+EST["ESTUDIANTE
 
-  Rel(estudiante, novi, "Utiliza")
-  Rel(profesor, novi, "Administra")
-  Rel(novi, groq, "Solicita servicios de IA")
-  Rel(groq, novi, "Devuelve respuestas generadas")
+Consulta actividades
+Participa en grupos
+Utiliza herramientas de IA"]
 
-  UpdateRelStyle(novi, groq, $offsetY="-35", $offsetX="35")
-  UpdateRelStyle(groq, novi, $offsetY="35", $offsetX="-35")
+PROF["PROFESOR
 
-  UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")
+Administra grupos
+Crea actividades
+Genera quizzes y rúbricas"]
+
+NOVI["NOVI
+
+Plataforma educativa
+
+Gestión académica
+Comunicación grupal
+Herramientas de IA"]
+
+GROQ["Groq API
+
+Servicio externo de
+Inteligencia Artificial"]
+
+EST -->|"Utiliza"| NOVI
+PROF -->|"Administra"| NOVI
+NOVI -->|"Solicita servicios de IA"| GROQ
+GROQ -->|"Devuelve respuestas generadas"| NOVI
+
+classDef person fill:#1565C0,stroke:#64B5F6,color:#FFFFFF,stroke-width:2px;
+classDef system fill:#1976D2,stroke:#90CAF9,color:#FFFFFF,stroke-width:3px;
+classDef external fill:#616161,stroke:#BDBDBD,color:#FFFFFF,stroke-width:2px;
+
+class EST,PROF person;
+class NOVI system;
+class GROQ external;
+
+
 ```
