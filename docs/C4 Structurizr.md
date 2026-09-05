@@ -10,7 +10,7 @@
 **Código utilizado**
 
 
-workspace "NOVI" "Plataforma educativa para gestión académica, comunicación grupal y herramientas de IA" {
+    workspace "NOVI" "Plataforma educativa para gestión académica, comunicación grupal y herramientas de IA" {
 
     !identifiers hierarchical
 
