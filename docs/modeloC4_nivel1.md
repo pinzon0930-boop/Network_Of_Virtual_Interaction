@@ -1,3 +1,4 @@
+```mermaid 
 C4Context
   title System Context diagram for NOVI
 
@@ -15,3 +16,4 @@ C4Context
   UpdateRelStyle(groq, novi, $offsetY="35", $offsetX="-35")
 
   UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")
+```
